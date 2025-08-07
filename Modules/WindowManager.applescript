@@ -1,17 +1,14 @@
-property OLLAMA_PORT : 0
-property MODEL_NAME : ""
-
-on generateWindowTitle(wifi_ip, sequence_number, title_type)
+on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_name)
 	if title_type is "server" then
-		return "Ollama Server #" & sequence_number & " [" & wifi_ip & ":" & OLLAMA_PORT & "]"
+		return "Ollama Server #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "]"
 	else if title_type is "chat" then
-		return "Ollama Chat #" & sequence_number & " [" & wifi_ip & ":" & OLLAMA_PORT & "] (" & MODEL_NAME & ")"
+		return "Ollama Chat #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "] (" & model_name & ")"
 	end if
 end generateWindowTitle
 
-on getMaxSequenceNumber(wifi_ip)
+on getMaxSequenceNumber(wifi_ip, ollama_port)
 	set max_seq to 0
-	set expected_server_pattern to "[" & wifi_ip & ":" & OLLAMA_PORT & "]"
+	set expected_server_pattern to "[" & wifi_ip & ":" & ollama_port & "]"
 	try
 		tell application "Terminal"
 			repeat with w in windows
@@ -47,11 +44,11 @@ on getMaxSequenceNumber(wifi_ip)
 	return max_seq
 end getMaxSequenceNumber
 
-on findLatestServerWindow(wifi_ip)
+on findLatestServerWindow(wifi_ip, ollama_port)
 	set max_seq to 0
 	set latest_window to missing value
 	set latest_sequence to missing value
-	set expected_server_pattern to "[" & wifi_ip & ":" & OLLAMA_PORT & "]"
+	set expected_server_pattern to "[" & wifi_ip & ":" & ollama_port & "]"
 
 	try
 		tell application "Terminal"

@@ -1,17 +1,16 @@
 -- Properties for constants, to be injected by the main script
-property OLLAMA_PORT : 0
-property MODEL_NAME : ""
+-- Properties for local constants
 property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.1
 
--- Properties for other modules, to be injected by the main script
-property Net : missing value
-property Win : missing value
+-- Properties for other modules, inherited from the parent script
+property parent : me
+property Network : missing value
+property WindowManager : missing value
 
-
-on waitForServer()
+on waitForServer(ollama_port)
 	set elapsed to 0
-	repeat until Net's isPortInUse(OLLAMA_PORT)
+	repeat until Network's isPortInUse(ollama_port)
 		delay SERVER_CHECK_INTERVAL
 		set elapsed to elapsed + SERVER_CHECK_INTERVAL
 		if elapsed > SERVER_STARTUP_TIMEOUT then
@@ -50,10 +49,10 @@ on createNewTerminalWindow(command)
 	end tell
 end createNewTerminalWindow
 
-on startOllamaServer(wifi_ip)
-	set next_seq to (Win's getMaxSequenceNumber(wifi_ip) + 1)
-	set window_title to Win's generateWindowTitle(wifi_ip, next_seq, "server")
-	set command to "OLLAMA_HOST=" & wifi_ip & ":" & OLLAMA_PORT & " ollama serve"
+on startOllamaServer(wifi_ip, ollama_port, model_name)
+	set next_seq to (WindowManager's getMaxSequenceNumber(wifi_ip, ollama_port) + 1)
+	set window_title to WindowManager's generateWindowTitle(wifi_ip, next_seq, "server", ollama_port, model_name)
+	set command to "OLLAMA_HOST=" & wifi_ip & ":" & ollama_port & " ollama serve"
 
 	set new_window to my createNewTerminalWindow(command)
 	my setTerminalTitle(new_window, window_title)
@@ -61,10 +60,10 @@ on startOllamaServer(wifi_ip)
 	return {window:new_window, sequence:next_seq}
 end startOllamaServer
 
-on validateServerWindow(target_window, wifi_ip, sequence_number)
+on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name)
 	if target_window is missing value then
 		set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。"
-		set details to "検索条件: IP=" & wifi_ip & ", PORT=" & OLLAMA_PORT & return & "期待ウィンドウ名: " & Win's generateWindowTitle(wifi_ip, sequence_number, "server")
+		set details to "検索条件: IP=" & wifi_ip & ", PORT=" & ollama_port & return & "期待ウィンドウ名: " & WindowManager's generateWindowTitle(wifi_ip, sequence_number, "server", ollama_port, model_name)
 
 		tell application "Terminal"
 			set details to details & return & "現在のTerminalウィンドウ一覧:"
@@ -78,11 +77,11 @@ on validateServerWindow(target_window, wifi_ip, sequence_number)
 	end if
 end validateServerWindow
 
-on executeOllamaModel(target_window, wifi_ip, sequence_number)
-	my validateServerWindow(target_window, wifi_ip, sequence_number)
+on executeOllamaModel(target_window, wifi_ip, sequence_number, model_name, ollama_port)
+	my validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name)
 
-	set command to "OLLAMA_HOST=http://" & wifi_ip & ":" & OLLAMA_PORT & " ollama run " & MODEL_NAME
+	set command to "OLLAMA_HOST=http://" & wifi_ip & ":" & ollama_port & " ollama run " & model_name
 	set new_tab to my openNewTerminalTab(target_window, command)
-	set tab_title to Win's generateWindowTitle(wifi_ip, sequence_number, "chat")
+	set tab_title to WindowManager's generateWindowTitle(wifi_ip, sequence_number, "chat", ollama_port, model_name)
 	my setTerminalTitle(new_tab, tab_title)
 end executeOllamaModel
