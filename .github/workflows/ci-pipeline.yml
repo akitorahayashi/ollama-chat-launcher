@@ -11,7 +11,7 @@ jobs:
   test-net:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test Network Module
         continue-on-error: true
         run: make test-net
@@ -19,7 +19,7 @@ jobs:
   test-server:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test ServerManager Module
         continue-on-error: true
         run: make test-server
@@ -27,7 +27,7 @@ jobs:
   test-window:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test WindowManager Module
         continue-on-error: true
         run: make test-window

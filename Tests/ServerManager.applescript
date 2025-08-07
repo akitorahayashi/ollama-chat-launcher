@@ -30,16 +30,25 @@ log "MANUAL TEST: The following tests for ServerManager require manual observati
 log "MANUAL TEST: They will open new Terminal windows and tabs."
 
 try
-    log "MANUAL TEST: Testing createNewTerminalWindow. A new Terminal window should open."
-    delay 3
+    log "Testing createNewTerminalWindow..."
+    tell application "Terminal"
+        set window_count_before to count of windows
+    end tell
+
     set new_window to ServerManager's createNewTerminalWindow("echo 'Hello from createNewTerminalWindow test'")
-    if new_window is not missing value then
-        log "Test createNewTerminalWindow: PASSED (visual confirmation needed)"
-    else
-        log "Test createNewTerminalWindow: FAILED"
-    end if
-    delay 2
-    tell application "Terminal" to close new_window
+
+    tell application "Terminal"
+        set window_count_after to count of windows
+        if window_count_after > window_count_before then
+            log "Test createNewTerminalWindow: PASSED"
+        else
+            log "Test createNewTerminalWindow: FAILED - Window count did not increase"
+        end if
+        -- Clean up the created window
+        if new_window is not missing value then
+            close new_window
+        end if
+    end tell
 on error e
     log "Test createNewTerminalWindow: FAILED - " & e
 end try

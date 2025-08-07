@@ -15,10 +15,11 @@ build: $(COMPILED_FILES)
 
 # Run all tests
 test: build
-	@for test_file in $(TEST_FILES); do \
-		echo "\n----- Running $$test_file -----"; \
+	@set -e; \
+	for test_file in $(TEST_FILES); do \
+		printf '\n----- Running %s -----\n' "$$test_file"; \
 		osascript "$$test_file"; \
-		echo "---------------------------------"; \
+		printf '---------------------------------\n'; \
 	done
 
 # Rule to compile a single module
