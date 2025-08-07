@@ -2,9 +2,12 @@ MODULES_DIR = Modules
 BUILD_DIR = build/modules
 TESTS_DIR = Tests
 
-MODULE_NAMES = Network ServerManager WindowManager
+# Dynamically get module names from the filesystem
+MODULE_SOURCES := $(wildcard $(MODULES_DIR)/*.applescript)
+MODULE_NAMES   := $(basename $(notdir $(MODULE_SOURCES)))
+
 COMPILED_FILES = $(patsubst %,$(BUILD_DIR)/%.scpt,$(MODULE_NAMES))
-TEST_FILES = $(patsubst %,$(TESTS_DIR)/%.applescript,$(MODULE_NAMES))
+TEST_FILES     = $(patsubst %,$(TESTS_DIR)/%.applescript,$(MODULE_NAMES))
 
 # Default target
 all: build
@@ -27,43 +30,35 @@ $(BUILD_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 	@echo "Compiling $< -> $@"
 	@osacompile -o $@ $<
 
-# CI-specific targets
-test-net:
+# CI-specific target generator
+define TEST_TEMPLATE
+test-$(1):
 	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling and testing Network module..."
-	@osacompile -o $(BUILD_DIR)/Network.scpt $(MODULES_DIR)/Network.applescript
-	@osascript $(TESTS_DIR)/Network.applescript
+	@echo "Compiling and testing $(1) module..."
+	@osacompile -o $(BUILD_DIR)/$(1).scpt $(MODULES_DIR)/$(1).applescript
+	@osascript $(TESTS_DIR)/$(1).applescript
+endef
 
-test-server:
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling and testing ServerManager module..."
-	@osacompile -o $(BUILD_DIR)/ServerManager.scpt $(MODULES_DIR)/ServerManager.applescript
-	@osascript $(TESTS_DIR)/ServerManager.applescript
-
-test-window:
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling and testing WindowManager module..."
-	@osacompile -o $(BUILD_DIR)/WindowManager.scpt $(MODULES_DIR)/WindowManager.applescript
-	@osascript $(TESTS_DIR)/WindowManager.applescript
+$(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
 run: build
 	@echo "Running main script..."
 	@osascript main.applescript
 
 help:
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Targets:"
-	@echo "  all                  Build all modules (default)"
-	@echo "  build                Build all modules"
-	@echo "  run                  Run the main application"
-	@echo "  test                 Run all unit tests"
-	@echo "  clean                Remove build artifacts"
-	@echo "  test-net             Compile and test the Network module"
-	@echo "  test-server          Compile and test the ServerManager module"
-	@echo "  test-window          Compile and test the WindowManager module"
+	@printf "Usage: make [target]\n\n"
+	@printf "Main Targets:\n"
+	@printf "  all\t\tBuild all modules (default)\n"
+	@printf "  build\t\tBuild all modules\n"
+	@printf "  run\t\tRun the main application\n"
+	@printf "  test\t\tRun all unit tests\n"
+	@printf "  clean\t\tRemove build artifacts\n"
+	@printf "\nCI Targets (Dynamically Generated):\n"
+	@printf "  test-%%  (e.g., test-Network)\tCompile and test a specific module\n"
 
 clean:
-	rm -rf $(dir $(BUILD_DIR))
+	-@rm -rf $(dir $(BUILD_DIR))
 
-.PHONY: all build test clean run help test-net test-server test-window
+.PHONY: all build test clean run help
+# Add dynamic test targets to .PHONY
+.PHONY: $(patsubst %,test-%,$(MODULE_NAMES))

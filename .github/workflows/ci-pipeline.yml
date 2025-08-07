@@ -8,26 +8,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-net:
+  test-Network:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Test Network Module
         continue-on-error: true
-        run: make test-net
+        run: make test-Network
 
-  test-server:
+  test-ServerManager:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Test ServerManager Module
         continue-on-error: true
-        run: make test-server
+        run: make test-ServerManager
 
-  test-window:
+  test-WindowManager:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Test WindowManager Module
         continue-on-error: true
-        run: make test-window
+        run: make test-WindowManager
