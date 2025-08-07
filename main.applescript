@@ -22,51 +22,46 @@ property OllamaManager : missing value
 
 
 -- ==========================================
--- Main Execution Handler
+-- Main Execution Block
 -- ==========================================
-on runOllamaLauncher()
-	try
-		-- ------------------------------------------
-		-- Load Modules and Inject Dependencies
-		-- ------------------------------------------
-		set script_path to (path to me as string)
+-- This top-level block loads modules and executes the main logic directly.
 
-		set my Utils to load script file (script_path & "Utils.scpt")
-		set my NetworkManager to load script file (script_path & "NetworkManager.scpt")
-		set my TerminalManager to load script file (script_path & "TerminalManager.scpt")
-		set my WindowManager to load script file (script_path & "WindowManager.scpt")
-		set my OllamaManager to load script file (script_path & "OllamaManager.scpt")
+try
+	-- ------------------------------------------
+	-- Load Modules and Inject Dependencies
+	-- ------------------------------------------
+	set script_path to (path to me as string)
 
-		-- Set the parent for each module to enable inter-module communication
-		set parent of my Utils to me
-		set parent of my NetworkManager to me
-		set parent of my TerminalManager to me
-		set parent of my WindowManager to me
-		set parent of my OllamaManager to me
+	set my Utils to load script file (script_path & "Utils.scpt")
+	set my NetworkManager to load script file (script_path & "NetworkManager.scpt")
+	set my TerminalManager to load script file (script_path & "TerminalManager.scpt")
+	set my WindowManager to load script file (script_path & "WindowManager.scpt")
+	set my OllamaManager to load script file (script_path & "OllamaManager.scpt")
 
-		-- ------------------------------------------
-		-- Main Process Flow
-		-- ------------------------------------------
-		set wifi_ip to my NetworkManager's getWifiIP()
+	-- Set the parent for each module to enable inter-module communication
+	set parent of my Utils to me
+	set parent of my NetworkManager to me
+	set parent of my TerminalManager to me
+	set parent of my WindowManager to me
+	set parent of my OllamaManager to me
 
-		if my NetworkManager's isPortInUse(OLLAMA_PORT) then
-			my OllamaManager's handleExistingServer(wifi_ip)
-		else
-			my OllamaManager's handleNewServer(wifi_ip)
-		end if
+	-- ------------------------------------------
+	-- Main Process Flow
+	-- ------------------------------------------
+	set wifi_ip to my NetworkManager's getWifiIP()
 
-	on error error_message
-		-- If an error occurs, use the Utils module to display a dialog if it's loaded.
-		if my Utils is not missing value then
-			my Utils's showError("実行エラー", "エラーが発生しました: " & error_message, stop)
-		else
-			-- Fallback if modules failed to load
-			display dialog "致命的なエラー: " & error_message buttons {"OK"} default button "OK" with title "実行エラー" with icon stop
-		end if
-	end try
-end runOllamaLauncher
+	if my NetworkManager's isPortInUse(OLLAMA_PORT) then
+		my OllamaManager's handleExistingServer(wifi_ip)
+	else
+		my OllamaManager's handleNewServer(wifi_ip)
+	end if
 
--- ==========================================
--- Run the script
--- ==========================================
-runOllamaLauncher()
+on error error_message
+	-- If an error occurs, use the Utils module to display a dialog if it's loaded.
+	if my Utils is not missing value then
+		my Utils's showError("実行エラー", "エラーが発生しました: " & error_message, stop)
+	else
+		-- Fallback if modules failed to load
+		display dialog "致命的なエラー: " & error_message buttons {"OK"} default button "OK" with title "実行エラー" with icon stop
+	end if
+end try
