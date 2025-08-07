@@ -7,23 +7,15 @@ property OLLAMA_PORT : 55764
 -- ==========================================
 -- Module Loading
 -- ==========================================
--- Get the path to the folder containing this script to build relative paths.
--- This makes the script portable.
+global Network, WindowManager, ServerManager
+
 set script_path to path to me
 set script_folder to (script_path as text) & "::"
+set compiled_folder to (script_folder & "build:modules:")
 
--- Load the modules using the robust `load script` command.
-set Network to load script file (script_folder & "Modules:Network.applescript")
-set WindowManager to load script file (script_folder & "Modules:WindowManager.applescript")
-set ServerManager to load script file (script_folder & "Modules:ServerManager.applescript")
-
--- ==========================================
--- Dependency Injection
--- ==========================================
--- Inject modules into the ServerManager module.
-set ServerManager's parent to me
-set ServerManager's Network to Network
-set ServerManager's WindowManager to WindowManager
+set Network to load script alias (compiled_folder & "Network.scpt")
+set WindowManager to load script alias (compiled_folder & "WindowManager.scpt")
+set ServerManager to load script alias (compiled_folder & "ServerManager.scpt")
 
 -- ==========================================
 -- Main Execution
@@ -47,19 +39,19 @@ on handleExistingServer(wifi_ip)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if server_window is not missing value then
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
 	else
 		my handleNewServer(wifi_ip)
 	end if
 end handleExistingServer
 
 on handleNewServer(wifi_ip)
-	set server_info to ServerManager's startOllamaServer(wifi_ip, OLLAMA_PORT, MODEL_NAME)
+	set server_info to ServerManager's startOllamaServer(wifi_ip, OLLAMA_PORT, MODEL_NAME, WindowManager)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
-	if ServerManager's waitForServer(OLLAMA_PORT) then
+	if ServerManager's waitForServer(OLLAMA_PORT, Network) then
 		delay 1 -- サーバー完全起動のための待機
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
 	else
 		log "起動失敗: サーバーの起動に失敗しました。"
 	end if
