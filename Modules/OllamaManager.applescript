@@ -65,20 +65,32 @@ script OllamaManager
 		set server_window to server_info's window
 		set sequence_number to server_info's sequence
 
+		-- ポートが開くまで待機
 		script port_checker
 			property parent_ref : parent
 			on check()
 				return parent_ref's NetworkManager's isPortInUse(parent_ref's OLLAMA_PORT)
 			end check
 		end script
+		set is_port_ready to parent's Utils's waitFor(port_checker, parent's SERVER_STARTUP_TIMEOUT, parent's SERVER_CHECK_INTERVAL, "サーバーのポート開放がタイムアウトしました。")
+		if not is_port_ready then
+			parent's Utils's showError("起動失敗", "サーバーのポート開放に失敗しました。", stop)
+			return
+		end if
 
-		set wait_successful to parent's Utils's waitFor(port_checker, parent's SERVER_STARTUP_TIMEOUT, parent's SERVER_CHECK_INTERVAL, "サーバーの起動がタイムアウトしました。")
-
-		if wait_successful then
-			delay 1 -- サーバー完全起動のための待機
+		-- APIが応答するまで待機
+		script api_checker
+			property parent_ref : parent
+			property ip_address : wifi_ip
+			on check()
+				return parent_ref's NetworkManager's isOllamaApiReady(ip_address, parent_ref's OLLAMA_PORT)
+			end check
+		end script
+		set is_api_ready to parent's Utils's waitFor(api_checker, parent's SERVER_STARTUP_TIMEOUT, parent's SERVER_CHECK_INTERVAL, "サーバーAPIの応答がタイムアウトしました。")
+		if is_api_ready then
 			my executeOllamaModel(server_window, wifi_ip, sequence_number)
 		else
-			parent's Utils's showError("起動失敗", "サーバーの起動に失敗しました。", stop)
+			parent's Utils's showError("起動失敗", "サーバーAPIの応答がありませんでした。", stop)
 		end if
 	end handleNewServer
 end script

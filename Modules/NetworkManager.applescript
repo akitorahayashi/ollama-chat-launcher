@@ -20,4 +20,9 @@ script NetworkManager
 		return shell_result's success
 	end isPortInUse
 
+	on isOllamaApiReady(host, port)
+		set command to "curl --silent --fail http://" & host & ":" & port
+		set shell_result to parent's Utils's executeShell(command)
+		return shell_result's success
+	end isOllamaApiReady
 end script
