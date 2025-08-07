@@ -1,59 +1,59 @@
 -- ==========================================
--- Main Properties
--- ==========================================
-property MODEL_NAME : "tinyllama"
-property OLLAMA_PORT : 55764
-
 -- ==========================================
 -- Module Loading
 -- ==========================================
 global Network, WindowManager, ServerManager
 
-set script_path to path to me
-tell application "Finder"
-	set script_container to container of script_path as text
-end tell
-set compiled_modules_folder to (script_container & "modules:")
+on loadModules()
+	set script_path to path to me
+	tell application "Finder"
+		set script_container to container of script_path as text
+	end tell
+	set compiled_modules_folder to (script_container & "modules:")
 
-set Network to load script alias (compiled_modules_folder & "Network.scpt")
-set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
-set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
-
--- ==========================================
--- Main Execution
--- ==========================================
-try
-	set wifi_ip to Network's getWifiIP()
-	if Network's isPortInUse(OLLAMA_PORT) then
-		my handleExistingServer(wifi_ip)
-	else
-		my handleNewServer(wifi_ip)
-	end if
-on error error_message
-	log "Execution Error: An error occurred: " & error_message
-end try
+	set Network to load script alias (compiled_modules_folder & "Network.scpt")
+	set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
+	set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
+end loadModules
 
 -- ==========================================
--- Main Flow Control Functions
+-- Public API
 -- ==========================================
-on handleExistingServer(wifi_ip)
-	set server_info to WindowManager's findLatestServerWindow(wifi_ip, OLLAMA_PORT)
+on runWithConfiguration(modelName, ollamaPort)
+	my loadModules()
+	try
+		set wifi_ip to Network's getWifiIP()
+		if Network's isPortInUse(ollamaPort) then
+			my handleExistingServer(wifi_ip, modelName, ollamaPort)
+		else
+			my handleNewServer(wifi_ip, modelName, ollamaPort)
+		end if
+	on error error_message
+		log "Execution Error: An error occurred: " & error_message
+	end try
+end runWithConfiguration
+
+-- ==========================================
+-- Internal Flow Control Functions
+-- ==========================================
+on handleExistingServer(wifi_ip, modelName, ollamaPort)
+	set server_info to WindowManager's findLatestServerWindow(wifi_ip, ollamaPort)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if server_window is not missing value then
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, modelName, ollamaPort, WindowManager)
 	else
-		my handleNewServer(wifi_ip)
+		my handleNewServer(wifi_ip, modelName, ollamaPort)
 	end if
 end handleExistingServer
 
-on handleNewServer(wifi_ip)
-	set server_info to ServerManager's startOllamaServer(wifi_ip, OLLAMA_PORT, MODEL_NAME, WindowManager)
+on handleNewServer(wifi_ip, modelName, ollamaPort)
+	set server_info to ServerManager's startOllamaServer(wifi_ip, ollamaPort, modelName, WindowManager)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
-	if ServerManager's waitForServer(OLLAMA_PORT, Network) then
+	if ServerManager's waitForServer(ollamaPort, Network) then
 		delay 1 -- Wait for the server to fully start
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, modelName, ollamaPort, WindowManager)
 	else
 		log "Startup Failed: Failed to start the server."
 	end if

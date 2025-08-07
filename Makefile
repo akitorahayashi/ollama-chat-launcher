@@ -27,14 +27,14 @@ build: $(MAIN_COMPILED)
 # Rule to compile the main script, depends on modules being compiled
 $(MAIN_COMPILED): $(MAIN_SOURCE) $(COMPILED_MODULES)
 	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling main script $< -> $@"
-	@osacompile -o $@ $<
+	@echo "Compiling main script '$<' -> '$@'"
+	@osacompile -o "$@" "$<"
 
 # Rule to compile a single module
 $(BUILD_DIR)/modules/%.scpt: $(MODULES_DIR)/%.applescript
 	@mkdir -p $(BUILD_DIR)/modules
-	@echo "Compiling module $< -> $@"
-	@osacompile -o $@ $<
+	@echo "Compiling module '$<' -> '$@'"
+	@osacompile -o "$@" "$<"
 
 # Run all tests
 test: build
@@ -48,15 +48,16 @@ test: build
 # CI-specific target generator
 define TEST_TEMPLATE
 test-$(1): build
-	@printf "\n--- Running test for $(1) module... ---\n"
-	@osascript $(TESTS_DIR)/$(1)Tests.applescript
+	@set -e; \
+	printf '\n--- Running test for $(1) module... ---\n'; \
+	osascript "$(TESTS_DIR)/$(1)Tests.applescript"
 endef
 
 $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
 run: build
 	@echo "Running main script..."
-	@osascript $(MAIN_COMPILED)
+	@osascript Tinyllama.applescript
 
 help:
 	@printf "Usage: make [target]\n\n"
