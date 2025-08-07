@@ -4,32 +4,35 @@ Ollamaサーバーとモデルを自動起動するAppleScriptです。
 
 ## 特徴
 
-- サーバーが起動していなければ自動で立ち上げ
-- 同じネットワーク上の他のデバイスからアクセス可能
-- 簡単にカスタマイズ
+- IPアドレスを自動取得または手動で設定も可能
+- ポート使用状況をチェック
+- 簡単なカスタマイズ
 
 ## 設定
 
+スクリプト上部の設定セクションを編集する
+
 ```applescript
-set model_name to "gemma3:latest"  -- モデル名
-set ollama_port to 11600           -- ポート番号
-set host_ip to "0.0.0.0"          -- ネットワークアクセス用
+set model_name to "gemma3:latest"
+set ollama_port to 11500
+set local_ip to getLocalIP() -- 自動取得 or "192.168.1.100" のように固定値を直接入力
 ```
+
+### IP設定のパターン
+
+- **Local PC**: `set local_ip to getLocalIP()`
+- **Wi-Fi**: `set local_ip to getWifiIP()`
+- **固定IP**: `set local_ip to "192.168.1.100"`（例）
 
 ## 使い方
 
-### 基本使用
+### 基本
 1. スクリプトを実行
-2. ターミナルでOllamaが起動
-
-### 他のデバイスからアクセス
-1. MacのIPを確認: `ifconfig | grep "inet " | grep -v 127.0.0.1`
-2. スマホで `http://192.168.1.100:11600`(例) にアクセス
+2. 自動でOllamaサーバーが起動
+3. 指定したモデルが実行される
 
 ### クイックアクション
-Automator → クイックアクション → AppleScript → スクリプト貼り付け
-
-## 注意事項
-
-- `0.0.0.0`では同じネットワーク上の全デバイスからアクセス可能
-- プライベートネットワーク内での使用を推奨
+1. Automator → 新規 → クイックアクション
+2. AppleScriptを実行 を追加
+3. スクリプト内容を貼り付け
+4. 保存
