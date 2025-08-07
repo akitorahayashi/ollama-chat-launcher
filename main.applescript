@@ -18,13 +18,6 @@ set WindowManager to load script file (script_folder & "Modules:WindowManager.ap
 set ServerManager to load script file (script_folder & "Modules:ServerManager.applescript")
 
 -- ==========================================
--- Dependency Injection
--- ==========================================
--- Inject modules into the ServerManager module.
-set ServerManager's parent to me
-set ServerManager's Network to Network
-set ServerManager's WindowManager to WindowManager
-
 -- ==========================================
 -- Main Execution
 -- ==========================================
@@ -47,19 +40,19 @@ on handleExistingServer(wifi_ip)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if server_window is not missing value then
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
 	else
 		my handleNewServer(wifi_ip)
 	end if
 end handleExistingServer
 
 on handleNewServer(wifi_ip)
-	set server_info to ServerManager's startOllamaServer(wifi_ip, OLLAMA_PORT, MODEL_NAME)
+	set server_info to ServerManager's startOllamaServer(wifi_ip, OLLAMA_PORT, MODEL_NAME, WindowManager)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
-	if ServerManager's waitForServer(OLLAMA_PORT) then
+	if ServerManager's waitForServer(OLLAMA_PORT, Network) then
 		delay 1 -- サーバー完全起動のための待機
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT)
+		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
 	else
 		log "起動失敗: サーバーの起動に失敗しました。"
 	end if

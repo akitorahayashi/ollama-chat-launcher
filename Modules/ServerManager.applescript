@@ -4,11 +4,7 @@ property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.1
 
 -- Properties for other modules, inherited from the parent script
-property parent : me
-property Network : missing value
-property WindowManager : missing value
-
-on waitForServer(ollama_port)
+on waitForServer(ollama_port, Network)
 	set elapsed to 0
 	repeat until Network's isPortInUse(ollama_port)
 		delay SERVER_CHECK_INTERVAL
@@ -49,7 +45,7 @@ on createNewTerminalWindow(command)
 	end tell
 end createNewTerminalWindow
 
-on startOllamaServer(wifi_ip, ollama_port, model_name)
+on startOllamaServer(wifi_ip, ollama_port, model_name, WindowManager)
 	set next_seq to (WindowManager's getMaxSequenceNumber(wifi_ip, ollama_port) + 1)
 	set window_title to WindowManager's generateWindowTitle(wifi_ip, next_seq, "server", ollama_port, model_name)
 	set command to "OLLAMA_HOST=" & wifi_ip & ":" & ollama_port & " ollama serve"
@@ -60,7 +56,7 @@ on startOllamaServer(wifi_ip, ollama_port, model_name)
 	return {window:new_window, sequence:next_seq}
 end startOllamaServer
 
-on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name)
+on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name, WindowManager)
 	if target_window is missing value then
 		set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。"
 		set details to "検索条件: IP=" & wifi_ip & ", PORT=" & ollama_port & return & "期待ウィンドウ名: " & WindowManager's generateWindowTitle(wifi_ip, sequence_number, "server", ollama_port, model_name)
@@ -77,8 +73,8 @@ on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, mo
 	end if
 end validateServerWindow
 
-on executeOllamaModel(target_window, wifi_ip, sequence_number, model_name, ollama_port)
-	my validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name)
+on executeOllamaModel(target_window, wifi_ip, sequence_number, model_name, ollama_port, WindowManager)
+	my validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name, WindowManager)
 
 	set command to "OLLAMA_HOST=http://" & wifi_ip & ":" & ollama_port & " ollama run " & model_name
 	set new_tab to my openNewTerminalTab(target_window, command)
