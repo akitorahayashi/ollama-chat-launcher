@@ -10,12 +10,14 @@ property OLLAMA_PORT : 55764
 global Network, WindowManager, ServerManager
 
 set script_path to path to me
-set script_folder to (script_path as text) & "::"
-set compiled_folder to (script_folder & "build:modules:")
+tell application "Finder"
+	set script_container to container of script_path as text
+end tell
+set compiled_modules_folder to (script_container & "modules:")
 
-set Network to load script alias (compiled_folder & "Network.scpt")
-set WindowManager to load script alias (compiled_folder & "WindowManager.scpt")
-set ServerManager to load script alias (compiled_folder & "ServerManager.scpt")
+set Network to load script alias (compiled_modules_folder & "Network.scpt")
+set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
+set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
 
 -- ==========================================
 -- Main Execution
