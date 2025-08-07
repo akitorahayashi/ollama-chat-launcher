@@ -1,21 +1,68 @@
--- ==========================================
--- 設定部分
--- ==========================================
-set model_name to "gemma3:latest" -- 使用するモデル名を指定
-set ollama_port to 55764
-set local_ip to getLocalIP() -- 自動取得 or "192.168.1.100" のように固定値を直接入力
-set server_startup_timeout to 30 -- サーバー起動待機のタイムアウトまでの秒数
-set server_check_interval to 0.1 -- サーバーが起動しているチェックする間隔（秒）
+property MODEL_NAME : "gemma3:latest"
+property OLLAMA_PORT : 55764
+property SERVER_STARTUP_TIMEOUT : 30
+property SERVER_CHECK_INTERVAL : 0.1
 
 -- ==========================================
--- 関数定義
--- ウィンドウ名生成関数
-on generateWindowTitle(ip_address, port_number)
-    return "Ollama Server [" & ip_address & ":" & port_number & "]"
+-- ハイレベル実行制御関数
+-- ==========================================
+on runOllamaLauncher()
+    try
+        set wifi_ip to getWifiIP()
+        
+        if isPortInUse(OLLAMA_PORT) then
+            handleExistingServer(wifi_ip)
+        else
+            handleNewServer(wifi_ip)
+        end if
+        
+    on error error_message
+        showError("実行エラー", "エラーが発生しました: " & error_message, stop)
+    end try
+end runOllamaLauncher
+
+-- ==========================================
+-- エラーハンドリング統一システム
+-- ==========================================
+on showError(title, message, icon_type)
+    display dialog message buttons {"OK"} default button "OK" with title title with icon icon_type
+end showError
+
+
+-- ==========================================
+-- Shell実行統一システム
+-- ==========================================
+on executeShell(command, silent)
+    try
+        set result to do shell script command
+        return {success:true, output:result}
+    on error error_message
+        return {success:false, output:error_message}
+    end try
+end executeShell
+
+-- ==========================================
+-- ウィンドウタイトル生成
+-- ==========================================
+on generateWindowTitle(wifi_ip, sequence_number, title_type)
+    if title_type is "server" then
+        return "Ollama Server #" & sequence_number & " [" & wifi_ip & ":" & OLLAMA_PORT & "]"
+    else if title_type is "chat" then
+        return "Ollama Chat #" & sequence_number & " [" & wifi_ip & ":" & OLLAMA_PORT & "] (" & MODEL_NAME & ")"
+    end if
 end generateWindowTitle
--- ==========================================
 
--- 簡単なID生成関数
+-- ==========================================
+-- ユーティリティ関数群
+-- ==========================================
+on extractFieldsFromString(text_to_split, delimiter)
+    set old_delimiters to AppleScript's text item delimiters
+    set AppleScript's text item delimiters to delimiter
+    set string_list to text items of text_to_split
+    set AppleScript's text item delimiters to old_delimiters
+    return string_list
+end extractFieldsFromString
+
 on generateSimpleID()
     set current_time to current date
     set hours_str to (hours of current_time as string)
@@ -30,132 +77,138 @@ on generateSimpleID()
     return hours_str & minutes_str & seconds_str
 end generateSimpleID
 
--- Wi-Fi IPアドレス取得関数
+-- ==========================================
+-- ネットワーク関連関数群
+-- ==========================================
 on getWifiIP()
-    try
-        set ip_address to do shell script "ifconfig en0 | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}'"
-        if ip_address is "" then
-            display dialog "Wi-Fi IPアドレスが取得できませんでした。Wi-Fiに接続しているか確認してください。" buttons {"OK"} default button "OK" with icon caution
-            error "Wi-Fi IPアドレスが取得できませんでした"
-        end if
-        return ip_address
-    on error
-        display dialog "Wi-Fi IPアドレスの取得に失敗しました。ネットワーク設定を確認してください。" buttons {"OK"} default button "OK" with icon stop
+    set shell_result to executeShell("ifconfig en0 | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}'", false)
+    if not shell_result's success or shell_result's output is "" then
+        showError("ネットワークエラー", "Wi-Fi IPアドレスが取得できませんでした。Wi-Fiに接続しているか確認してください。", caution)
         error "Wi-Fi IPアドレスが取得できませんでした"
-    end try
+    end if
+    return shell_result's output
 end getWifiIP
 
--- ローカルIPアドレス取得関数
-on getLocalIP()
-    try
-        set ip_address to do shell script "ifconfig | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | head -1"
-        if ip_address is "" then
-            display dialog "IPアドレスが取得できませんでした。ネットワークに接続しているか確認してください。" buttons {"OK"} default button "OK" with icon caution
-            error "IPアドレスが取得できませんでした"
-        end if
-        return ip_address
-    on error
-        display dialog "IPアドレスの取得に失敗しました。ネットワーク設定を確認してください。" buttons {"OK"} default button "OK" with icon stop
-        error "IPアドレスが取得できませんでした"
-    end try
-end getLocalIP
-
--- ポート使用状況チェック関数
 on isPortInUse(port_number)
-    try
-        do shell script "lsof -i tcp:" & port_number & " > /dev/null 2>&1"
-        return true
-    on error
-        return false
-    end try
+    set shell_result to executeShell("lsof -i tcp:" & port_number, true)
+    return shell_result's success
 end isPortInUse
 
--- Ollamaサーバー起動関数
-on startOllamaServer(ip_address, port_number)
-    set window_title to generateWindowTitle(ip_address, port_number)
-    tell application "Terminal"
-        activate
-        do script "OLLAMA_HOST=" & ip_address & ":" & port_number & " ollama serve"
-        set custom title of front window to window_title
-        set new_window to front window
-        return {new_window, ip_address & ":" & port_number}
-    end tell
-end startOllamaServer
-
--- Terminalウィンドウでモデル実行関数
-on runOllamaModelInWindow(target_window, ip_address, port_number, model, server_id)
-    try
-        -- サーバーウィンドウが見つからない場合はエラー
-        if target_window is missing value then
-            set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。スクリプトを終了します。" & return & "検索条件: IP=" & ip_address & ", PORT=" & port_number & return & "期待ウィンドウ名: " & generateWindowTitle(ip_address, port_number) & return & "現在のTerminalウィンドウ一覧:"
-            tell application "Terminal"
-                repeat with w in windows
-                    set msg to msg & return & "- " & custom title of w
-                end repeat
-            end tell
-            display dialog msg buttons {"OK"} default button "OK" with icon stop
-            error "Ollamaサーバーのウィンドウが見つかりません。条件: " & ip_address & ":" & port_number
-        end if
-        
-        tell application "Terminal"
-            activate
-            -- ターゲットウィンドウを最前面に持ってくる
-            set index of target_window to 1
-        end tell
-        
-        -- System Eventsを使って新しいタブを作成
-        tell application "System Events"
-            tell process "Terminal"
-                set frontmost to true
-                keystroke "t" using command down
-                delay 0.5 -- 新しいタブが作成されるのを待つ
-            end tell
-        end tell
-        
-        -- 新しく作成されたタブ（最前面ウィンドウのアクティブなタブ）でコマンドを実行
-        tell application "Terminal"
-            -- `do script`を特定のタブで実行すると、そのタブの現在のプロセスが置き換えられる
-            do script "OLLAMA_HOST=http://" & ip_address & ":" & port_number & " ollama run " & model in selected tab of front window
-            
-            if server_id is missing value then
-                display dialog "エラー: サーバーIDが取得できませんでした。開発者に報告してください。" buttons {"OK"} default button "OK" with icon stop
-                error "server_id is missing value"
-            end if
-            
-            -- 新しいタブのタイトルを設定
-            set custom title of selected tab of front window to "Ollama Chat [" & ip_address & ":" & port_number & "] (" & model & ")"
-        end tell
-        
-    on error error_message
-        display dialog "Terminalでモデルの実行に失敗しました: " & error_message buttons {"OK"} default button "OK" with icon stop
-        error "runOllamaModelInWindow failed: " & error_message
-    end try
-end runOllamaModelInWindow
-
--- サーバー起動まで待機する関数
-on waitForServer(port_number, timeout_seconds)
+on waitForServer()
     set elapsed to 0
-    repeat until isPortInUse(port_number)
-        delay server_check_interval
-        set elapsed to elapsed + server_check_interval
-        if elapsed > timeout_seconds then
-            display dialog "サーバーの起動がタイムアウトしました。手動で確認してください。" buttons {"OK"} default button "OK" with icon caution
+    repeat until isPortInUse(OLLAMA_PORT)
+        delay SERVER_CHECK_INTERVAL
+        set elapsed to elapsed + SERVER_CHECK_INTERVAL
+        if elapsed > SERVER_STARTUP_TIMEOUT then
+            showError("タイムアウト", "サーバーの起動がタイムアウトしました。手動で確認してください。", caution)
             return false
         end if
     end repeat
     return true
 end waitForServer
 
--- サーバーウィンドウを安全に検索する関数
-on findServerWindow(ip_address, port_number)
-    set target_title to generateWindowTitle(ip_address, port_number)
+-- ==========================================
+-- Terminal操作抽象化レイヤー
+-- ==========================================
+on openNewTerminalTab(parent_window, command)
+    tell application "Terminal"
+        activate
+        set current_window to parent_window
+        -- ウィンドウを選択してからCmd+Tで新しいタブを作成
+        set selected of current_window to true
+        tell application "System Events"
+            keystroke "t" using command down
+        end tell
+        delay 0.5
+        -- 新しいタブでコマンドを実行
+        do script command in front window
+        return selected tab of front window
+    end tell
+end openNewTerminalTab
+
+on setTerminalTitle(window_or_tab, title)
+    tell application "Terminal"
+        set custom title of window_or_tab to title
+    end tell
+end setTerminalTitle
+
+on createNewTerminalWindow(command)
+    tell application "Terminal"
+        activate
+        do script command
+        return front window
+    end tell
+end createNewTerminalWindow
+
+-- ==========================================
+-- ウィンドウ管理関数群
+-- ==========================================
+on getMaxSequenceNumber(wifi_ip)
+    set max_seq to 0
+    set expected_server_pattern to "[" & wifi_ip & ":" & OLLAMA_PORT & "]"
     try
         tell application "Terminal"
             repeat with w in windows
                 try
                     set window_title to custom title of w
-                    if window_title is target_title then
-                        return {w, ip_address & ":" & port_number}
+                    -- 現在の設定と完全一致するOllamaサーバーウィンドウから連番を抽出
+                    if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
+                        set title_parts to my extractFieldsFromString(window_title, "#")
+                        if (count of title_parts) ≥ 2 then
+                            set seq_part to item 2 of title_parts
+                            set space_pos to offset of " " in seq_part
+                            if space_pos > 0 then
+                                set seq_str to text 1 thru (space_pos - 1) of seq_part
+                                try
+                                    set seq_num to seq_str as integer
+                                    if seq_num > max_seq then set max_seq to seq_num
+                                end try
+                            end if
+                        end if
+                    end if
+                on error
+                    -- このウィンドウはスキップ
+                end try
+            end repeat
+        end tell
+    on error error_message
+        showError("ウィンドウ管理エラー", "Terminalウィンドウの連番取得中にエラーが発生しました: " & error_message, stop)
+        error "getMaxSequenceNumber failed"
+    end try
+    return max_seq
+end getMaxSequenceNumber
+
+on findLatestServerWindow(wifi_ip)
+    set max_seq to 0
+    set latest_window to missing value
+    set latest_sequence to missing value
+    set expected_server_pattern to "[" & wifi_ip & ":" & OLLAMA_PORT & "]"
+    
+    try
+        tell application "Terminal"
+            repeat with w in windows
+                try
+                    set window_title to custom title of w
+                    -- 現在の設定と完全一致するOllamaサーバーウィンドウを探す
+                    if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
+                        if window_title contains "#" then
+                            set title_parts to my extractFieldsFromString(window_title, "#")
+                            if (count of title_parts) ≥ 2 then
+                                set seq_part to item 2 of title_parts
+                                set space_pos to offset of " " in seq_part
+                                if space_pos > 0 then
+                                    set seq_str to text 1 thru (space_pos - 1) of seq_part
+                                    try
+                                        set seq_num to seq_str as integer
+                                        if seq_num > max_seq then
+                                            set max_seq to seq_num
+                                            set latest_window to w
+                                            set latest_sequence to seq_num
+                                        end if
+                                    end try
+                                end if
+                            end if
+                        end if
                     end if
                 on error
                     -- このウィンドウはスキップ
@@ -165,45 +218,77 @@ on findServerWindow(ip_address, port_number)
     on error
         -- ウィンドウ検索でエラーが発生した場合
     end try
-    return {missing value, missing value}
-end findServerWindow
+    
+    return {window:latest_window, sequence:latest_sequence}
+end findLatestServerWindow
+
+-- ==========================================
+-- サーバー操作関数群
+-- ==========================================
+on startOllamaServer(wifi_ip)
+    set next_seq to (getMaxSequenceNumber(wifi_ip) + 1)
+    set window_title to generateWindowTitle(wifi_ip, next_seq, "server")
+    set command to "OLLAMA_HOST=" & wifi_ip & ":" & OLLAMA_PORT & " ollama serve"
+    
+    set new_window to createNewTerminalWindow(command)
+    setTerminalTitle(new_window, window_title)
+    
+    return {window:new_window, sequence:next_seq}
+end startOllamaServer
+
+on validateServerWindow(target_window, wifi_ip, sequence_number)
+    if target_window is missing value then
+        set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。"
+        set details to "検索条件: IP=" & wifi_ip & ", PORT=" & OLLAMA_PORT & return & "期待ウィンドウ名: " & generateWindowTitle(wifi_ip, sequence_number, "server")
+        
+        tell application "Terminal"
+            set details to details & return & "現在のTerminalウィンドウ一覧:"
+            repeat with w in windows
+                set details to details & return & "- " & custom title of w
+            end repeat
+        end tell
+        
+        showError("ウィンドウエラー", msg & return & details, stop)
+        error "Server window not found"
+    end if
+end validateServerWindow
+
+on executeOllamaModel(target_window, wifi_ip, sequence_number)
+    validateServerWindow(target_window, wifi_ip, sequence_number)
+    
+    set command to "OLLAMA_HOST=http://" & wifi_ip & ":" & OLLAMA_PORT & " ollama run " & MODEL_NAME
+    set new_tab to openNewTerminalTab(target_window, command)
+    set tab_title to generateWindowTitle(wifi_ip, sequence_number, "chat")
+    setTerminalTitle(new_tab, tab_title)
+end executeOllamaModel
+
+-- ==========================================
+-- メインフロー制御関数群
+-- ==========================================
+on handleExistingServer(wifi_ip)
+    set server_info to findLatestServerWindow(wifi_ip)
+    set server_window to server_info's window
+    set sequence_number to server_info's sequence
+    if server_window is not missing value then
+        executeOllamaModel(server_window, wifi_ip, sequence_number)
+    else
+        handleNewServer(wifi_ip)
+    end if
+end handleExistingServer
+
+on handleNewServer(wifi_ip)
+    set server_info to startOllamaServer(wifi_ip)
+    set server_window to server_info's window
+    set sequence_number to server_info's sequence
+    if waitForServer() then
+        delay 1 -- サーバー完全起動のための待機
+        executeOllamaModel(server_window, wifi_ip, sequence_number)
+    else
+        showError("起動失敗", "サーバーの起動に失敗しました。", stop)
+    end if
+end handleNewServer
 
 -- ==========================================
 -- 実行部分
 -- ==========================================
-
-try
-    -- ポートが使用中か確認
-    if isPortInUse(ollama_port) then
-        -- 既にサーバーが起動している場合
-        say "サーバーは既に起動中です。新しいタブでチャットを開始します。"
-        
-        -- 既存のサーバーウィンドウを探す
-        set server_info to findServerWindow(local_ip, ollama_port)
-        set server_window to item 1 of server_info
-        set server_id to item 2 of server_info
-        
-        -- モデルを実行
-        runOllamaModelInWindow(server_window, local_ip, ollama_port, model_name, server_id)
-    else
-        -- Ollamaサーバーを起動
-        say "サーバーを起動しています..."
-        set server_info to startOllamaServer(local_ip, ollama_port)
-        set server_window to item 1 of server_info
-        set server_id to item 2 of server_info
-        
-        -- サーバーの起動を待機
-        say "サーバーの起動を待機中..."
-        if waitForServer(ollama_port, server_startup_timeout) then
-            say "サーバーが起動しました。チャットを開始します。"
-            delay 1 -- サーバー完全起動のための少し長めの待機
-            -- 同じTerminalウィンドウの新しいタブでモデルを実行
-            runOllamaModelInWindow(server_window, local_ip, ollama_port, model_name, server_id)
-        else
-            display dialog "サーバーの起動に失敗しました。" buttons {"OK"} default button "OK" with icon stop
-        end if
-    end if
-    
-on error error_message
-    display dialog "エラーが発生しました: " & error_message buttons {"OK"} default button "OK" with icon stop
-end try
+runOllamaLauncher()
