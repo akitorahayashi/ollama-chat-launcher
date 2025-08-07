@@ -7,15 +7,13 @@ property OLLAMA_PORT : 55764
 -- ==========================================
 -- Module Loading
 -- ==========================================
--- Get the path to the folder containing this script to build relative paths.
--- This makes the script portable.
 set script_path to path to me
 set script_folder to (script_path as text) & "::"
 
--- Load the modules using the robust `load script` command.
-set Network to load script file (script_folder & "Modules:Network.applescript")
-set WindowManager to load script file (script_folder & "Modules:WindowManager.applescript")
-set ServerManager to load script file (script_folder & "Modules:ServerManager.applescript")
+set compiled_folder to (script_folder & "build:modules:")
+set Network to load script file (compiled_folder & "Network.scpt")
+set WindowManager to load script file (compiled_folder & "WindowManager.scpt")
+set ServerManager to load script file (compiled_folder & "ServerManager.scpt")
 
 -- ==========================================
 -- ==========================================
