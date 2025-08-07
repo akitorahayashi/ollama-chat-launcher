@@ -40,4 +40,20 @@ script Utils
 
 		return hours_str & minutes_str & seconds_str
 	end generateSimpleID
+
+	on waitFor(condition_checker, timeout, poll_interval, description)
+		set start_time to current date
+		repeat
+			if (current date) - start_time > timeout then
+				my showError("タイムアウト", description, caution)
+				return false
+			end if
+
+			if condition_checker's check() then
+				return true
+			end if
+
+			delay poll_interval
+		end repeat
+	end waitFor
 end script

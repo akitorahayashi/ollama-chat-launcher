@@ -22,23 +22,10 @@ script WindowManager
 				repeat with w in windows
 					try
 						set window_title to custom title of w
-						-- 現在の設定と完全一致するOllamaサーバーウィンドウから連番を抽出
-						if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
-							set title_parts to parent's Utils's extractFieldsFromString(window_title, "#")
-							if (count of title_parts) ≥ 2 then
-								set seq_part to item 2 of title_parts
-								set space_pos to offset of " " in seq_part
-								if space_pos > 0 then
-									set seq_str to text 1 thru (space_pos - 1) of seq_part
-									try
-										set seq_num to seq_str as integer
-										if seq_num > max_seq then set max_seq to seq_num
-									end try
-								end if
-							end if
-						end if
+						set seq_num to my _extractSequenceFromTitle(window_title, expected_server_pattern)
+						if seq_num > max_seq then set max_seq to seq_num
 					on error
-						-- このウィンドウはスキップ
+						-- This window doesn't match, skip
 					end try
 				end repeat
 			end tell
@@ -60,29 +47,14 @@ script WindowManager
 				repeat with w in windows
 					try
 						set window_title to custom title of w
-						-- 現在の設定と完全一致するOllamaサーバーウィンドウを探す
-						if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
-							if window_title contains "#" then
-								set title_parts to parent's Utils's extractFieldsFromString(window_title, "#")
-								if (count of title_parts) ≥ 2 then
-									set seq_part to item 2 of title_parts
-									set space_pos to offset of " " in seq_part
-									if space_pos > 0 then
-										set seq_str to text 1 thru (space_pos - 1) of seq_part
-										try
-											set seq_num to seq_str as integer
-											if seq_num > max_seq then
-												set max_seq to seq_num
-												set latest_window to w
-												set latest_sequence to seq_num
-											end if
-										end try
-									end if
-								end if
-							end if
+						set seq_num to my _extractSequenceFromTitle(window_title, expected_server_pattern)
+						if seq_num > max_seq then
+							set max_seq to seq_num
+							set latest_window to w
+							set latest_sequence to seq_num
 						end if
 					on error
-						-- このウィンドウはスキップ
+						-- This window doesn't match, skip
 					end try
 				end repeat
 			end tell
@@ -92,4 +64,26 @@ script WindowManager
 
 		return {window:latest_window, sequence:latest_sequence}
 	end findLatestServerWindow
+
+	-- Private helper function to extract sequence number from a window title
+	on _extractSequenceFromTitle(window_title, expected_pattern)
+		if not (window_title starts with "Ollama Server #" and window_title contains expected_pattern) then
+			error "Title does not match expected pattern."
+		end if
+
+		set title_parts to parent's Utils's extractFieldsFromString(window_title, "#")
+		if (count of title_parts) < 2 then
+			error "Title does not contain a sequence number part."
+		end if
+
+		set seq_part to item 2 of title_parts
+		set space_pos to offset of " " in seq_part
+		if space_pos > 0 then
+			set seq_str to text 1 thru (space_pos - 1) of seq_part
+			return seq_str as integer
+		else
+			error "Sequence number format is invalid."
+		end if
+	end _extractSequenceFromTitle
+
 end script

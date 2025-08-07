@@ -64,7 +64,17 @@ script OllamaManager
 		set server_info to my startOllamaServer(wifi_ip)
 		set server_window to server_info's window
 		set sequence_number to server_info's sequence
-		if parent's NetworkManager's waitForServer() then
+
+		script port_checker
+			property parent_ref : parent
+			on check()
+				return parent_ref's NetworkManager's isPortInUse(parent_ref's OLLAMA_PORT)
+			end check
+		end script
+
+		set wait_successful to parent's Utils's waitFor(port_checker, parent's SERVER_STARTUP_TIMEOUT, parent's SERVER_CHECK_INTERVAL, "サーバーの起動がタイムアウトしました。")
+
+		if wait_successful then
 			delay 1 -- サーバー完全起動のための待機
 			my executeOllamaModel(server_window, wifi_ip, sequence_number)
 		else

@@ -20,16 +20,4 @@ script NetworkManager
 		return shell_result's success
 	end isPortInUse
 
-	on waitForServer()
-		set elapsed to 0
-		repeat until my isPortInUse(parent's OLLAMA_PORT)
-			delay parent's SERVER_CHECK_INTERVAL
-			set elapsed to elapsed + parent's SERVER_CHECK_INTERVAL
-			if elapsed > parent's SERVER_STARTUP_TIMEOUT then
-				parent's Utils's showError("タイムアウト", "サーバーの起動がタイムアウトしました。手動で確認してください。", caution)
-				return false
-			end if
-		end repeat
-		return true
-	end waitForServer
 end script
