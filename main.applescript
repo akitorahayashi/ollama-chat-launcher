@@ -9,6 +9,10 @@ set server_check_interval to 0.1 -- サーバーが起動しているチェッ�
 
 -- ==========================================
 -- 関数定義
+-- ウィンドウ名生成関数
+on generateWindowTitle(ip_address, port_number)
+    return "Ollama Server [" & ip_address & ":" & port_number & "]"
+end generateWindowTitle
 -- ==========================================
 
 -- 簡単なID生成関数
@@ -68,60 +72,64 @@ end isPortInUse
 
 -- Ollamaサーバー起動関数
 on startOllamaServer(ip_address, port_number)
-    -- 簡単なIDを生成
-    set server_id to generateSimpleID()
-    
+    set window_title to generateWindowTitle(ip_address, port_number)
     tell application "Terminal"
         activate
         do script "OLLAMA_HOST=" & ip_address & ":" & port_number & " ollama serve"
-        set custom title of front window to "Ollama Server [" & server_id & "] (" & ip_address & ":" & port_number & ")"
+        set custom title of front window to window_title
         set new_window to front window
-        return {new_window, server_id}
+        return {new_window, ip_address & ":" & port_number}
     end tell
 end startOllamaServer
 
 -- Terminalウィンドウでモデル実行関数
 on runOllamaModelInWindow(target_window, ip_address, port_number, model, server_id)
-	try
-		-- サーバーウィンドウが見つからない場合はエラー
-		if target_window is missing value then
-			display dialog "Ollamaサーバーのウィンドウが見つかりませんでした。スクリプトを終了します。" buttons {"OK"} default button "OK" with icon stop
-			error "Ollamaサーバーのウィンドウが見つかりません。"
-		end if
-		
-		tell application "Terminal"
-			activate
-			-- ターゲットウィンドウを最前面に持ってくる
-			set index of target_window to 1
-		end tell
-		
-		-- System Eventsを使って新しいタブを作成
-		tell application "System Events"
-			tell process "Terminal"
-				set frontmost to true
-				keystroke "t" using command down
-				delay 0.5 -- 新しいタブが作成されるのを待つ
-			end tell
-		end tell
-		
-		-- 新しく作成されたタブ（最前面ウィンドウのアクティブなタブ）でコマンドを実行
-		tell application "Terminal"
-			-- `do script`を特定のタブで実行すると、そのタブの現在のプロセスが置き換えられる
-			do script "OLLAMA_HOST=http://" & ip_address & ":" & port_number & " ollama run " & model in selected tab of front window
-			
-			if server_id is missing value then
-				display dialog "エラー: サーバーIDが取得できませんでした。開発者に報告してください。" buttons {"OK"} default button "OK" with icon stop
-				error "server_id is missing value"
-			end if
-			
-			-- 新しいタブのタイトルを設定
-			set custom title of selected tab of front window to "Ollama Chat [" & server_id & "] (" & model & ")"
-		end tell
-		
-	on error error_message
-		display dialog "Terminalでモデルの実行に失敗しました: " & error_message buttons {"OK"} default button "OK" with icon stop
-		error "runOllamaModelInWindow failed: " & error_message
-	end try
+    try
+        -- サーバーウィンドウが見つからない場合はエラー
+        if target_window is missing value then
+            set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。スクリプトを終了します。" & return & "検索条件: IP=" & ip_address & ", PORT=" & port_number & return & "期待ウィンドウ名: " & generateWindowTitle(ip_address, port_number) & return & "現在のTerminalウィンドウ一覧:"
+            tell application "Terminal"
+                repeat with w in windows
+                    set msg to msg & return & "- " & custom title of w
+                end repeat
+            end tell
+            display dialog msg buttons {"OK"} default button "OK" with icon stop
+            error "Ollamaサーバーのウィンドウが見つかりません。条件: " & ip_address & ":" & port_number
+        end if
+        
+        tell application "Terminal"
+            activate
+            -- ターゲットウィンドウを最前面に持ってくる
+            set index of target_window to 1
+        end tell
+        
+        -- System Eventsを使って新しいタブを作成
+        tell application "System Events"
+            tell process "Terminal"
+                set frontmost to true
+                keystroke "t" using command down
+                delay 0.5 -- 新しいタブが作成されるのを待つ
+            end tell
+        end tell
+        
+        -- 新しく作成されたタブ（最前面ウィンドウのアクティブなタブ）でコマンドを実行
+        tell application "Terminal"
+            -- `do script`を特定のタブで実行すると、そのタブの現在のプロセスが置き換えられる
+            do script "OLLAMA_HOST=http://" & ip_address & ":" & port_number & " ollama run " & model in selected tab of front window
+            
+            if server_id is missing value then
+                display dialog "エラー: サーバーIDが取得できませんでした。開発者に報告してください。" buttons {"OK"} default button "OK" with icon stop
+                error "server_id is missing value"
+            end if
+            
+            -- 新しいタブのタイトルを設定
+            set custom title of selected tab of front window to "Ollama Chat [" & ip_address & ":" & port_number & "] (" & model & ")"
+        end tell
+        
+    on error error_message
+        display dialog "Terminalでモデルの実行に失敗しました: " & error_message buttons {"OK"} default button "OK" with icon stop
+        error "runOllamaModelInWindow failed: " & error_message
+    end try
 end runOllamaModelInWindow
 
 -- サーバー起動まで待機する関数
@@ -139,23 +147,15 @@ on waitForServer(port_number, timeout_seconds)
 end waitForServer
 
 -- サーバーウィンドウを安全に検索する関数
-on findServerWindow()
+on findServerWindow(ip_address, port_number)
+    set target_title to generateWindowTitle(ip_address, port_number)
     try
         tell application "Terminal"
             repeat with w in windows
                 try
                     set window_title to custom title of w
-                    if window_title contains "Ollama Server" then
-                        -- サーバーIDを抽出
-                        set server_id to missing value
-                        if window_title contains "[" and window_title contains "]" then
-                            set start_pos to offset of "[" in window_title
-                            set end_pos to offset of "]" in window_title
-                            if start_pos > 0 and end_pos > start_pos then
-                                set server_id to text (start_pos + 1) thru (end_pos - 1) of window_title
-                            end if
-                        end if
-                        return {w, server_id}
+                    if window_title is target_title then
+                        return {w, ip_address & ":" & port_number}
                     end if
                 on error
                     -- このウィンドウはスキップ
@@ -179,7 +179,7 @@ try
         say "サーバーは既に起動中です。新しいタブでチャットを開始します。"
         
         -- 既存のサーバーウィンドウを探す
-        set server_info to findServerWindow()
+        set server_info to findServerWindow(local_ip, ollama_port)
         set server_window to item 1 of server_info
         set server_id to item 2 of server_info
         
