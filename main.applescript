@@ -30,13 +30,16 @@ try
 	-- ------------------------------------------
 	-- Load Modules and Inject Dependencies
 	-- ------------------------------------------
-	set script_path to (path to me as string)
+	-- Get the path to the folder containing this script for robust module loading
+	tell application "Finder"
+		set script_folder_path to (container of (path to me)) as string
+	end tell
 
-	set my Utils to load script file (script_path & "Utils.scpt")
-	set my NetworkManager to load script file (script_path & "NetworkManager.scpt")
-	set my TerminalManager to load script file (script_path & "TerminalManager.scpt")
-	set my WindowManager to load script file (script_path & "WindowManager.scpt")
-	set my OllamaManager to load script file (script_path & "OllamaManager.scpt")
+	set my Utils to load script file (script_folder_path & "Modules:Utils.applescript")
+	set my NetworkManager to load script file (script_folder_path & "Modules:NetworkManager.applescript")
+	set my TerminalManager to load script file (script_folder_path & "Modules:TerminalManager.applescript")
+	set my WindowManager to load script file (script_folder_path & "Modules:WindowManager.applescript")
+	set my OllamaManager to load script file (script_folder_path & "Modules:OllamaManager.applescript")
 
 	-- Set the parent for each module to enable inter-module communication
 	set parent of my Utils to me

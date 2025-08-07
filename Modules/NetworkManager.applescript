@@ -6,9 +6,6 @@
 script NetworkManager
 	property parent : missing value
 
-	-- ==========================================
-	-- ネットワーク関連関数群
-	-- ==========================================
 	on getWifiIP()
 		set shell_result to parent's Utils's executeShell("ifconfig en0 | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}'", false)
 		if not shell_result's success or shell_result's output is "" then

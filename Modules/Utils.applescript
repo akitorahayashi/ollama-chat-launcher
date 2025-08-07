@@ -6,17 +6,10 @@
 script Utils
 	property parent : missing value
 
-	-- ==========================================
-	-- エラーハンドリング統一システム
-	-- ==========================================
 	on showError(title, message, icon_type)
 		display dialog message buttons {"OK"} default button "OK" with title title with icon icon_type
 	end showError
 
-
-	-- ==========================================
-	-- Shell実行統一システム
-	-- ==========================================
 	on executeShell(command, silent)
 		try
 			set result to do shell script command
@@ -26,10 +19,6 @@ script Utils
 		end try
 	end executeShell
 
-
-	-- ==========================================
-	-- ユーティリティ関数群
-	-- ==========================================
 	on extractFieldsFromString(text_to_split, delimiter)
 		set old_delimiters to AppleScript's text item delimiters
 		set AppleScript's text item delimiters to delimiter

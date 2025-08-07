@@ -5,9 +5,6 @@
 script TerminalManager
 	property parent : missing value
 
-	-- ==========================================
-	-- Terminal操作抽象化レイヤー
-	-- ==========================================
 	on openNewTerminalTab(parent_window, command)
 		tell application "Terminal"
 			activate

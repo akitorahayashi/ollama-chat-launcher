@@ -6,9 +6,6 @@
 script WindowManager
 	property parent : missing value
 
-	-- ==========================================
-	-- ウィンドウタイトル生成
-	-- ==========================================
 	on generateWindowTitle(wifi_ip, sequence_number, title_type)
 		if title_type is "server" then
 			return "Ollama Server #" & sequence_number & " [" & wifi_ip & ":" & parent's OLLAMA_PORT & "]"
@@ -17,9 +14,6 @@ script WindowManager
 		end if
 	end generateWindowTitle
 
-	-- ==========================================
-	-- ウィンドウ管理関数群
-	-- ==========================================
 	on getMaxSequenceNumber(wifi_ip)
 		set max_seq to 0
 		set expected_server_pattern to "[" & wifi_ip & ":" & parent's OLLAMA_PORT & "]"
