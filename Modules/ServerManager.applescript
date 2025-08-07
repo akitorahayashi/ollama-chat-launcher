@@ -9,7 +9,7 @@ on waitForServer(ollama_port, Network)
             delay SERVER_CHECK_INTERVAL
             set elapsed to elapsed + SERVER_CHECK_INTERVAL
             if elapsed > SERVER_STARTUP_TIMEOUT then
-                log "タイムアウト: サーバーの起動がタイムアウトしました。手動で確認してください。"
+                log "Timeout: Server startup timed out. Please check manually."
                 return false
             end if
         end repeat
@@ -57,17 +57,17 @@ on waitForServer(ollama_port, Network)
 
     on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name, WindowManager)
         if target_window is missing value then
-            set msg to "Ollamaサーバーのウィンドウが見つかりませんでした。"
-            set details to "検索条件: IP=" & wifi_ip & ", PORT=" & ollama_port & return & "期待ウィンドウ名: " & WindowManager's generateWindowTitle(wifi_ip, sequence_number, "server", ollama_port, model_name)
+            set msg to "Ollama server window not found."
+            set details to "Search criteria: IP=" & wifi_ip & ", PORT=" & ollama_port & return & "Expected window name: " & WindowManager's generateWindowTitle(wifi_ip, sequence_number, "server", ollama_port, model_name)
 
             tell application "Terminal"
-                set details to details & return & "現在のTerminalウィンドウ一覧:"
+                set details to details & return & "Current Terminal window list:"
                 repeat with w in windows
                     set details to details & return & "- " & custom title of w
                 end repeat
             end tell
 
-            log "ウィンドウエラー: " & msg & return & details
+            log "Window Error: " & msg & return & details
             error "Server window not found"
         end if
     end validateServerWindow

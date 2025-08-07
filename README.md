@@ -1,38 +1,38 @@
-## 概要
+## Overview
 
-Ollamaサーバーとモデルを自動起動するAppleScriptです。
+This is an AppleScript that automatically starts the Ollama server and model.
 
-## 特徴
+## Features
 
-- IPアドレスを自動で取得、手動で設定も可能
-- ポート使用状況をチェック
-- 簡単なカスタマイズ
+- Automatically retrieves the IP address, with an option for manual setting.
+- Checks port usage.
+- Easy to customize.
 
-## 設定
+## Configuration
 
-スクリプト上部の設定セクションを編集する
+Edit the configuration section at the top of the script.
 
 ```applescript
 set model_name to "gemma3:latest"
 set ollama_port to 11500
-set local_ip to getLocalIP() -- 自動取得 or "192.168.1.100" のように固定値を直接入力
+set local_ip to getLocalIP() // Auto-detect or enter a fixed IP like "192.168.1.100"
 ```
 
-### IP設定のパターン
+### IP Configuration Patterns
 
 - **Local PC**: `set local_ip to getLocalIP()`
 - **Wi-Fi**: `set local_ip to getWifiIP()`
-- **固定IP**: `set local_ip to "192.168.1.100"`（例）
+- **Static IP**: `set local_ip to "192.168.1.100"` (example)
 
-## 使い方
+## Usage
 
-### 基本
-1. スクリプトを実行
-2. 自動でOllamaサーバーが起動
-3. 指定したモデルが実行される
+### Basic
+1. Run the script.
+2. The Ollama server will start automatically.
+3. The specified model will be executed.
 
-### クイックアクション
-1. Automator → 新規 → クイックアクション
-2. AppleScriptを実行 を追加
-3. スクリプト内容を貼り付け
-4. 保存
+### Quick Action
+1. Automator -> New -> Quick Action
+2. Add "Run AppleScript"
+3. Paste the script content
+4. Save
