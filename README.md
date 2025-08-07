@@ -1,5 +1,3 @@
-# Ollama AppleScript Runner
-
 ## Overview
 
 This project provides a modular AppleScript framework for automatically starting and managing an Ollama server and interacting with different models.
