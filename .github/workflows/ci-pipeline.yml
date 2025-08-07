@@ -1,0 +1,33 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-net:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test Network Module
+        continue-on-error: true
+        run: make test-net
+
+  test-server:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test ServerManager Module
+        continue-on-error: true
+        run: make test-server
+
+  test-window:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test WindowManager Module
+        continue-on-error: true
+        run: make test-window

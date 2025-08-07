@@ -1,7 +1,7 @@
 -- ==========================================
 -- Main Properties
 -- ==========================================
-property MODEL_NAME : "gemma3:latest"
+property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55764
 
 -- ==========================================
@@ -28,11 +28,11 @@ try
 		my handleNewServer(wifi_ip)
 	end if
 on error error_message
-	log "実行エラー: エラーが発生しました: " & error_message
+	log "Execution Error: An error occurred: " & error_message
 end try
 
 -- ==========================================
--- メインフロー制御関数群
+-- Main Flow Control Functions
 -- ==========================================
 on handleExistingServer(wifi_ip)
 	set server_info to WindowManager's findLatestServerWindow(wifi_ip, OLLAMA_PORT)
@@ -50,9 +50,9 @@ on handleNewServer(wifi_ip)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if ServerManager's waitForServer(OLLAMA_PORT, Network) then
-		delay 1 -- サーバー完全起動のための待機
+		delay 1 -- Wait for the server to fully start
 		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, MODEL_NAME, OLLAMA_PORT, WindowManager)
 	else
-		log "起動失敗: サーバーの起動に失敗しました。"
+		log "Startup Failed: Failed to start the server."
 	end if
 end handleNewServer

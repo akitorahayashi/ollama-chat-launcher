@@ -14,7 +14,7 @@ on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_
                 repeat with w in windows
                     try
                         set window_title to custom title of w
-                        -- 現在の設定と完全一致するOllamaサーバーウィンドウから連番を抽出
+                        -- Extract sequence number from Ollama server windows that exactly match the current settings
                         if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
                             set old_delimiters to AppleScript's text item delimiters
                             set AppleScript's text item delimiters to "#"
@@ -33,12 +33,12 @@ on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_
                             end if
                         end if
                     on error
-                        -- このウィンドウはスキップ
+                        -- Skip this window
                     end try
                 end repeat
             end tell
         on error error_message
-            log "ウィンドウ管理エラー: Terminalウィンドウの連番取得中にエラーが発生しました: " & error_message
+            log "Window Management Error: An error occurred while retrieving the sequence number of the Terminal window: " & error_message
             error "getMaxSequenceNumber failed"
         end try
         return max_seq
@@ -55,7 +55,7 @@ on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_
                 repeat with w in windows
                     try
                         set window_title to custom title of w
-                        -- 現在の設定と完全一致するOllamaサーバーウィンドウを探す
+                        -- Find an Ollama server window that exactly matches the current settings
                         if window_title starts with "Ollama Server #" and window_title contains expected_server_pattern then
                             if window_title contains "#" then
                                 set old_delimiters to AppleScript's text item delimiters
@@ -80,12 +80,12 @@ on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_
                             end if
                         end if
                     on error
-                        -- このウィンドウはスキップ
+                        -- Skip this window
                     end try
                 end repeat
             end tell
         on error
-            -- ウィンドウ検索でエラーが発生した場合
+            -- If an error occurs during window search
         end try
 
     return {window:latest_window, sequence:latest_sequence}
