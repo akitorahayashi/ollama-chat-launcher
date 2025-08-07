@@ -10,7 +10,7 @@ script Utils
 		display dialog message buttons {"OK"} default button "OK" with title title with icon icon_type
 	end showError
 
-	on executeShell(command, silent)
+	on executeShell(command)
 		try
 			set result to do shell script command
 			return {success:true, output:result}
