@@ -32,10 +32,8 @@ $(BUILD_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 
 # CI-specific target generator
 define TEST_TEMPLATE
-test-$(1):
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling and testing $(1) module..."
-	@osacompile -o $(BUILD_DIR)/$(1).scpt $(MODULES_DIR)/$(1).applescript
+test-$(1): build
+	@printf "\n--- Running test for $(1) module... ---\n"
 	@osascript $(TESTS_DIR)/$(1).applescript
 endef
 
