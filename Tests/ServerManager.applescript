@@ -1,8 +1,23 @@
 -- Load the modules to be tested
-set module_path to (path to me as text) & "::build:modules:"
-set ServerManager to load script alias (module_path & "ServerManager.scpt")
-set WindowManager to load script alias (module_path & "WindowManager.scpt")
-set Network to load script alias (module_path & "Network.scpt")
+set module_base_path to (path to me as text) & "::build:modules:"
+set modules_to_load to {{"ServerManager", ""}, {"WindowManager", ""}, {"Network", ""}}
+
+repeat with i from 1 to count of modules_to_load
+    set module_info to item i of modules_to_load
+    set module_name to item 1 of module_info
+    set module_path to module_base_path & module_name & ".scpt"
+    try
+        alias module_path
+        set item 2 of module_info to (load script alias module_path)
+    on error
+        log "SETUP ERROR: " & module_name & ".scpt not found at " & module_path
+        return
+    end try
+end repeat
+
+set ServerManager to item 2 of item 1 of modules_to_load
+set WindowManager to item 2 of item 2 of modules_to_load
+set Network to item 2 of item 3 of modules_to_load
 
 
 -- The following tests require a running Terminal application and will create windows and tabs.
@@ -55,19 +70,31 @@ end try
 
 
 try
-    log "MANUAL TEST: Testing openNewTerminalTab. A new Terminal window and tab should open."
-    delay 3
-    tell application "Terminal" to activate
-    do script ""
-    set parent_window to front window
+    log "Testing openNewTerminalTab..."
+    -- Create a new window to work in
+    tell application "Terminal"
+        activate
+        set parent_window to do script ""
+        set tabs_before to count of tabs of parent_window
+    end tell
+    delay 0.5
+
     set new_tab to ServerManager's openNewTerminalTab(parent_window, "echo 'Hello from openNewTerminalTab test'")
-    if new_tab is not missing value then
-        log "Test openNewTerminalTab: PASSED (visual confirmation needed)"
-    else
-        log "Test openNewTerminalTab: FAILED"
-    end if
-    delay 2
-    tell application "Terminal" to close parent_window
+
+    tell application "Terminal"
+        set tabs_after to count of tabs of parent_window
+        if tabs_after > tabs_before then
+            log "Test openNewTerminalTab: PASSED"
+        else
+            log "Test openNewTerminalTab: FAILED - Tab count did not increase"
+        end if
+        -- Clean up the created window
+        close parent_window
+    end tell
 on error e
+    -- Ensure cleanup even on error
+    try
+        tell application "Terminal" to close parent_window
+    end try
     log "Test openNewTerminalTab: FAILED - " & e
 end try

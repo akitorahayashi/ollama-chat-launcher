@@ -3,7 +3,6 @@ BUILD_DIR = build/modules
 TESTS_DIR = Tests
 
 MODULE_NAMES = Network ServerManager WindowManager
-MODULE_FILES = $(patsubst %,$(MODULES_DIR)/%.applescript,$(MODULE_NAMES))
 COMPILED_FILES = $(patsubst %,$(BUILD_DIR)/%.scpt,$(MODULE_NAMES))
 TEST_FILES = $(patsubst %,$(TESTS_DIR)/%.applescript,$(MODULE_NAMES))
 
@@ -65,6 +64,6 @@ help:
 	@echo "  test-window          Compile and test the WindowManager module"
 
 clean:
-	rm -rf build
+	rm -rf $(dir $(BUILD_DIR))
 
 .PHONY: all build test clean run help test-net test-server test-window

@@ -3,7 +3,7 @@
 -- It also requires a running Terminal application.
 
 -- To run this test:
--- 1. Make sure all modules are compiled using build_modules.sh
+-- 1. Make sure all modules are compiled using: make build
 -- 2. Run this script from the root of the repository using: osascript Tests/main.applescript
 
 log "Running main script integration test..."

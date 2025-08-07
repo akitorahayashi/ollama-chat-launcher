@@ -1,5 +1,11 @@
 -- Load the module to be tested
 set module_path to (path to me as text) & "::build:modules:Network.scpt"
+try
+    alias module_path
+on error
+    log "SETUP ERROR: Network.scpt not found at " & module_path
+    return
+end try
 set Network to load script alias module_path
 
 -- Test getWifiIP

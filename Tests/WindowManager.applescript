@@ -1,5 +1,11 @@
 -- Load the module to be tested
 set module_path to (path to me as text) & "::build:modules:WindowManager.scpt"
+try
+    alias module_path
+on error
+    log "SETUP ERROR: WindowManager.scpt not found at " & module_path
+    return
+end try
 set WindowManager to load script alias module_path
 
 -- Test generateWindowTitle
