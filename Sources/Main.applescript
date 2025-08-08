@@ -9,7 +9,7 @@ on loadModules()
 	tell application "Finder"
 		set script_container to container of script_path as text
 	end tell
-	set compiled_modules_folder to (script_container & "modules:")
+	set compiled_modules_folder to (script_container & "build:modules:")
 
 	set Network to load script alias (compiled_modules_folder & "Network.scpt")
 	set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
