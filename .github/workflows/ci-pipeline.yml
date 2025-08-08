@@ -31,3 +31,19 @@ jobs:
       - name: Test WindowManager Module
         continue-on-error: true
         run: make test-WindowManager
+
+  test-CommandBuilder:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test CommandBuilder Module
+        continue-on-error: true
+        run: make test-CommandBuilder
+
+  test-TerminalManager:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test TerminalManager Module
+        continue-on-error: true
+        run: make test-TerminalManager

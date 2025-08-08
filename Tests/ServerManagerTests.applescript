@@ -1,100 +1,54 @@
+-- Get the path to the parent directory of the current script's directory (i.e., the project root)
+on get_project_root()
+	set script_path to path to me
+	tell application "Finder"
+		set script_container to container of script_path as text
+		set project_root to container of (alias script_container) as text
+	end tell
+	return project_root
+end get_project_root
+
+set project_root to my get_project_root()
+set modules_path to project_root & "Sources:Modules:"
+
 -- Load the modules to be tested
-set module_base_path to (path to me as text) & "::build:modules:"
-set modules_to_load to {{"ServerManager", ""}, {"WindowManager", ""}, {"Network", ""}}
+try
+	set ServerManager to load script file (modules_path & "ServerManager.applescript")
+	set Network to load script file (modules_path & "Network.applescript")
+on error err_msg
+	log "SETUP ERROR: " & err_msg
+	return
+end try
 
-repeat with i from 1 to count of modules_to_load
-    set module_info to item i of modules_to_load
-    set module_name to item 1 of module_info
-    set module_path to module_base_path & module_name & ".scpt"
-    try
-        alias module_path
-        set item 2 of module_info to (load script alias module_path)
-    on error
-        log "SETUP ERROR: " & module_name & ".scpt not found at " & module_path
-        return
-    end try
-end repeat
-
-set ServerManager to item 2 of item 1 of modules_to_load
-set WindowManager to item 2 of item 2 of modules_to_load
-set Network to item 2 of item 3 of modules_to_load
-
-
--- The following tests require a running Terminal application and will create windows and tabs.
--- They are designed to be run in a controlled environment.
 
 -- Test waitForServer
--- This test is difficult to automate without a mock server.
--- We can test the timeout case.
+-- This test checks the timeout functionality of the waitForServer handler.
 try
-    log "Testing waitForServer timeout. This will take 30 seconds."
-    set result to ServerManager's waitForServer(54321, Network)
-    if not result then
-        log "Test waitForServer (timeout): PASSED"
-    else
-        log "Test waitForServer (timeout): FAILED - Server did not time out."
-    end if
+	log "Testing waitForServer timeout. This will take 30 seconds."
+	-- Temporarily override the timeout property for faster testing if possible,
+	-- otherwise, we must wait for the full duration.
+	-- For this test, we assume the property is not easily mutable from the outside
+	-- and we test the actual timeout value.
+	set start_time to current date
+	set result to ServerManager's waitForServer("127.0.0.1", 54321, Network)
+	set end_time to current date
+	set duration to end_time - start_time
+
+	if not result then
+		log "Test waitForServer (timeout): PASSED - Function returned false as expected."
+		if duration > 29 and duration < 32 then
+			log "Test waitForServer (timeout duration): PASSED - Test took approximately 30 seconds."
+		else
+			log "Test waitForServer (timeout duration): FAILED - Test duration was " & duration & " seconds, expected ~30."
+		end if
+	else
+		log "Test waitForServer (timeout): FAILED - Server did not time out."
+	end if
 on error e
-    log "Test waitForServer (timeout): FAILED - " & e
+	log "Test waitForServer (timeout): FAILED with error: " & e
 end try
 
--- The following tests are highly dependent on user interaction and environment.
--- They are provided as a template for manual testing.
-
-log "MANUAL TEST: The following tests for ServerManager require manual observation."
-log "MANUAL TEST: They will open new Terminal windows and tabs."
-
-try
-    log "Testing createNewTerminalWindow..."
-    tell application "Terminal"
-        set window_count_before to count of windows
-    end tell
-
-    set new_window to ServerManager's createNewTerminalWindow("echo 'Hello from createNewTerminalWindow test'")
-
-    tell application "Terminal"
-        set window_count_after to count of windows
-        if window_count_after > window_count_before then
-            log "Test createNewTerminalWindow: PASSED"
-        else
-            log "Test createNewTerminalWindow: FAILED - Window count did not increase"
-        end if
-        -- Clean up the created window
-        if new_window is not missing value then
-            close new_window
-        end if
-    end tell
-on error e
-    log "Test createNewTerminalWindow: FAILED - " & e
-end try
-
-
-try
-    log "Testing openNewTerminalTab..."
-    -- Create a new window to work in
-    tell application "Terminal"
-        activate
-        set parent_window to do script ""
-        set tabs_before to count of tabs of parent_window
-    end tell
-    delay 0.5
-
-    set new_tab to ServerManager's openNewTerminalTab(parent_window, "echo 'Hello from openNewTerminalTab test'")
-
-    tell application "Terminal"
-        set tabs_after to count of tabs of parent_window
-        if tabs_after > tabs_before then
-            log "Test openNewTerminalTab: PASSED"
-        else
-            log "Test openNewTerminalTab: FAILED - Tab count did not increase"
-        end if
-        -- Clean up the created window
-        close parent_window
-    end tell
-on error e
-    -- Ensure cleanup even on error
-    try
-        tell application "Terminal" to close parent_window
-    end try
-    log "Test openNewTerminalTab: FAILED - " & e
-end try
+-- We can't easily test the success case without starting a real server,
+-- which is beyond the scope of this unit test. The timeout case is the
+-- most critical to test automatically.
+log "ServerManager tests complete."
