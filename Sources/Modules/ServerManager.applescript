@@ -56,7 +56,7 @@ on startOllamaServer(ip_address, ollama_port, model_name, WindowManager)
         "echo 'Starting Ollama server...';"
 
     set server_command to "OLLAMA_HOST=" & ip_address & ":" & ollama_port & " ollama serve"
-    set final_command to display_command & " " & server_command
+    set final_command to display_command & " && " & server_command
 
     set new_window to my createNewTerminalWindow(final_command)
         my setTerminalTitle(new_window, window_title)

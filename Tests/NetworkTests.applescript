@@ -13,8 +13,8 @@ set Network to load script alias module_path
 try
     set ip to Network's getIPAddress()
     -- The function should always return a string (either a found IP or the fallback 127.0.0.1).
-    -- A simple validation is to check if the string is not empty and contains dots.
-    if ip is not "" and ip contains "." then
+    -- Validate basic IPv4 format by checking for dots and reasonable length.
+    if ip is not "" and ip contains "." and (count of characters of ip) ≥ 7 and (count of characters of ip) ≤ 15 then
         log "Test getIPAddress: PASSED - Received: " & ip
     else
         log "Test getIPAddress: FAILED - Invalid IP address received: " & ip
