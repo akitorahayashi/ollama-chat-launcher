@@ -3,9 +3,9 @@ property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.1
 
 -- Properties for other modules, inherited from the parent script
-on waitForServer(ollama_port, Network)
+on waitForServer(ip_address, ollama_port, Network)
         set elapsed to 0
-        repeat until Network's isPortInUse(ollama_port)
+        repeat until Network's isPortInUse(ollama_port, ip_address)
             delay SERVER_CHECK_INTERVAL
             set elapsed to elapsed + SERVER_CHECK_INTERVAL
             if elapsed > SERVER_STARTUP_TIMEOUT then
@@ -56,7 +56,7 @@ on startOllamaServer(ip_address, ollama_port, model_name, WindowManager)
         "echo 'Starting Ollama server...';"
 
     set server_command to "OLLAMA_HOST=" & ip_address & ":" & ollama_port & " ollama serve"
-    set final_command to display_command & " && " & server_command
+    set final_command to display_command & " " & server_command
 
     set new_window to my createNewTerminalWindow(final_command)
         my setTerminalTitle(new_window, window_title)

@@ -83,6 +83,37 @@ on error err
 end try
 ```
 
+### Manually Overriding the IP Address
+
+In most cases, the script will automatically detect the correct IP address (either the Wi-Fi IP or localhost). However, for certain network configurations, such as when using macOS's **Internet Sharing** feature, you may need to manually specify the server's IP address.
+
+You can do this by setting the `OVERRIDE_IP_ADDRESS` property in your entry point script.
+
+**Example:**
+
+```applescript
+-- ==========================================
+-- Configuration
+-- ==========================================
+property MODEL_NAME : "tinyllama"
+property OLLAMA_PORT : 55764
+
+-- Optional: Manually specify the IP address for the server.
+-- If set to 'missing value', the script will automatically use the active
+-- Wi-Fi IP address, or fall back to localhost (127.0.0.1).
+-- This is useful for setups like macOS Internet Sharing (e.g., "192.168.2.1").
+-- Example: property OVERRIDE_IP_ADDRESS : "192.168.2.1"
+property OVERRIDE_IP_ADDRESS : missing value
+
+-- ==========================================
+-- Main Logic
+-- ==========================================
+try
+    -- ... (rest of the script)
+```
+
+If you don't need to override the IP, you can either omit the property or leave it set to `missing value`.
+
 ### Creating a New Model Entrypoint
 
 1.  Create a copy of an existing entry point script (like `Tinyllama.applescript`) and give it a descriptive name (e.g., `Gemma.applescript`).
