@@ -55,41 +55,19 @@ make test
 
 ## Configuration
 
-To change the model or port, you can create and edit entry point scripts. The project is designed to support multiple configurations for different models (e.g., `Tinyllama.applescript`, `Gemma.applescript`).
+To customize the application, you can create and edit entry point scripts like `Tinyllama.applescript`. This file serves as the main configuration file for a specific model.
 
-### Example: `Tinyllama.applescript`
+To create a new configuration for a different model, simply copy the `Tinyllama.applescript` file. For example, to create a configuration for a Gemma model, you could run the following command in your terminal:
 
-```applescript
--- ==========================================
--- Configuration
--- ==========================================
-property MODEL_NAME : "tinyllama"
-property OLLAMA_PORT : 55764
-
--- ==========================================
--- Main Logic
--- ==========================================
-try
-  tell application "Finder"
-    set project_folder to (container of (path to me)) as text
-  end tell
-  set main_lib_path to (project_folder & "build:Main.scpt")
-
-  set MainLib to load script alias main_lib_path
-  MainLib's runWithConfiguration(MODEL_NAME, OLLAMA_PORT)
-
-on error err
-  log "Error in Tinyllama entry point: " & err
-end try
+```bash
+cp Tinyllama.applescript Gemma.applescript
 ```
 
-### Manually Overriding the IP Address
+Then, open the new `Gemma.applescript` file and edit the configuration properties (`MODEL_NAME`, `OLLAMA_PORT`, `OVERRIDE_IP_ADDRESS`) at the top to match your needs.
 
-In most cases, the script will automatically detect the correct IP address (either the Wi-Fi IP or localhost). However, for certain network configurations, such as when using macOS's **Internet Sharing** feature, you may need to manually specify the server's IP address.
+### Example Configuration (`Tinyllama.applescript`)
 
-You can do this by setting the `OVERRIDE_IP_ADDRESS` property in your entry point script.
-
-**Example:**
+The entry point script contains all the necessary configuration properties. Below is the full content of `Tinyllama.applescript`, which you can use as a template.
 
 ```applescript
 -- ==========================================
@@ -97,7 +75,6 @@ You can do this by setting the `OVERRIDE_IP_ADDRESS` property in your entry poin
 -- ==========================================
 property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55764
-
 -- Optional: Manually specify the IP address for the server.
 -- If set to 'missing value', the script will automatically use the active
 -- Wi-Fi IP address, or fall back to localhost (127.0.0.1).
@@ -109,13 +86,15 @@ property OVERRIDE_IP_ADDRESS : missing value
 -- Main Logic
 -- ==========================================
 try
-    -- ... (rest of the script)
+	tell application "Finder"
+		set project_folder to (container of (path to me)) as text
+	end tell
+	set main_lib_path to (project_folder & "build:Main.scpt")
+
+	set MainLib to load script alias main_lib_path
+	MainLib's runWithConfiguration(MODEL_NAME, OLLAMA_PORT, OVERRIDE_IP_ADDRESS)
+
+on error err
+	log "Error in Tinyllama entry point: " & err
+end try
 ```
-
-If you don't need to override the IP, you can either omit the property or leave it set to `missing value`.
-
-### Creating a New Model Entrypoint
-
-1.  Create a copy of an existing entry point script (like `Tinyllama.applescript`) and give it a descriptive name (e.g., `Gemma.applescript`).
-2.  Open the new file and edit the `MODEL_NAME` and `OLLAMA_PORT` properties to match your desired configuration.
-3.  Run your new script using one of the methods described in the "Running the Application" section.
