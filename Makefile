@@ -41,7 +41,10 @@ test: build
 	@set -euo pipefail; \
 	for test_file in $(TEST_FILES); do \
 		printf '\n----- Running %s -----\n' "$$test_file"; \
-		osascript "$$test_file"; \
+		if ! osascript "$$test_file" 2>&1; then \
+			printf 'Test %s failed with error\n' "$$test_file"; \
+			exit 1; \
+		fi; \
 		printf '---------------------------------\n'; \
 	done
 
@@ -50,7 +53,10 @@ define TEST_TEMPLATE
 test-$(1): build
 	@set -euo pipefail; \
 	printf '\n--- Running test for $(1) module... ---\n'; \
-	osascript "$(TESTS_DIR)/$(1)Tests.applescript"
+	if ! osascript "$(TESTS_DIR)/$(1)Tests.applescript" 2>&1; then \
+		printf 'Test failed with error\n'; \
+		exit 1; \
+	fi
 endef
 
 $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
@@ -58,7 +64,10 @@ $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 test-Main: build
 	@set -euo pipefail; \
 	printf '\n--- Running test for Main script... ---\n'; \
-	osascript "Tests/MainTests.applescript"
+	if ! osascript "Tests/MainTests.applescript" 2>&1; then \
+		printf 'Test failed with error\n'; \
+		exit 1; \
+	fi
 
 help:
 	@printf "Usage: make [target]\n\n"

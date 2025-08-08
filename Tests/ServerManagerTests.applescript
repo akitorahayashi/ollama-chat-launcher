@@ -9,15 +9,15 @@ on get_project_root()
 end get_project_root
 
 set project_root to my get_project_root()
-set modules_path to project_root & "Sources:Modules:"
+set modules_path to project_root & "build:modules:"
 
 -- Load the modules to be tested
 try
-	set ServerManager to load script file (modules_path & "ServerManager.applescript")
-	set Network to load script file (modules_path & "Network.applescript")
+	set ServerManager to load script file (modules_path & "ServerManager.scpt")
+	set Network to load script file (modules_path & "Network.scpt")
 on error err_msg
 	log "SETUP ERROR: " & err_msg
-	return
+	error "Test setup failed: " & err_msg
 end try
 
 

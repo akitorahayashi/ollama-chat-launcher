@@ -16,10 +16,6 @@ on getIPAddress(overrideIP)
         return overrideIP
     end if
 
-    if overrideIP is not missing value and overrideIP is not "" then
-        return overrideIP
-    end if
-
     set wifiIP to _getWifiIP()
     if wifiIP is missing value then
         return _getLocalhostIP()
@@ -49,7 +45,7 @@ on _getWifiIP()
 			return ip_address
 		end if
 	on error errMsg number errNum
-		return "Error: " & errMsg & " (Error Number: " & errNum & ")"
+		return missing value
 	end try
 end _getWifiIP
 

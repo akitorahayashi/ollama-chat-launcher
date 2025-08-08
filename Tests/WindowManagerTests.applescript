@@ -1,28 +1,41 @@
+-- Get the path to the parent directory of the current script's directory (i.e., the project root)
+on get_project_root()
+	set script_path to path to me
+	tell application "Finder"
+		set script_container to container of script_path as text
+		set project_root to container of (alias script_container) as text
+	end tell
+	return project_root
+end get_project_root
+
+set project_root to my get_project_root()
+
 -- Load the module to be tested
-set module_path to (path to me as text) & "::build:modules:WindowManager.scpt"
+set module_path to project_root & "build:modules:WindowManager.scpt"
 try
     alias module_path
 on error
     log "SETUP ERROR: WindowManager.scpt not found at " & module_path
-    return
+    error "Test setup failed: WindowManager.scpt not found"
 end try
 set WindowManager to load script alias module_path
 
 -- Test generateWindowTitle
 try
-    set title1 to WindowManager's generateWindowTitle("192.168.1.1", 1, "server", 8080, "test-model")
+    set title1 to WindowManager's generateWindowTitle("192.168.1.1", 1, "server", 8080, "tinyllama")
     if title1 is "Ollama Server #1 [192.168.1.1:8080]" then
         log "Test generateWindowTitle (server): PASSED"
     else
-        log "Test generateWindowTitle (server): FAILED - Unexpected title: " & title1
+        log "Test generateWindowTitle (server): FAILED - Expected 'Ollama Server #1 [192.168.1.1:8080]', got '" & title1 & "'"
     end if
 on error e
     log "Test generateWindowTitle (server): FAILED - " & e
 end try
 
 try
-    set title2 to WindowManager's generateWindowTitle("192.168.1.1", 2, "chat", 8080, "test-model")
-    if title2 is "Ollama Chat #2 [192.168.1.1:8080] (test-model)" then
+    -- Test for chat window title
+    set title2 to WindowManager's generateWindowTitle("192.168.1.1", 2, "chat", 8080, "tinyllama")
+    if title2 is "Ollama Chat #2 [192.168.1.1:8080] (tinyllama)" then
         log "Test generateWindowTitle (chat): PASSED"
     else
         log "Test generateWindowTitle (chat): FAILED - Unexpected title: " & title2

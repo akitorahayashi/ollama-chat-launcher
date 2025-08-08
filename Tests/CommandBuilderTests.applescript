@@ -9,27 +9,27 @@ on get_project_root()
 end get_project_root
 
 set project_root to my get_project_root()
-set modules_path to project_root & "Sources:Modules:"
+set modules_path to project_root & "build:modules:"
 
 -- Load the module to be tested
 try
-	set CommandBuilder to load script file (modules_path & "CommandBuilder.applescript")
+	set CommandBuilder to load script file (modules_path & "CommandBuilder.scpt")
 on error err_msg
 	log "SETUP ERROR: " & err_msg
-	return
+	error "Test setup failed: " & err_msg
 end try
 
 
 -- Test buildServerCommand
 try
 	log "Testing buildServerCommand..."
-	set ip to "192.168.1.10"
-	set port to "11434"
-	set model to "llama3"
+	set test_ip to "192.168.1.10"
+	set test_port to "11434"
+	set test_model to "tinyllama"
 	-- Note: The display part of the command still uses unescaped params, which is correct.
 	-- The executable part uses escaped params.
-	set expected_command to "echo '--- Private LLM Launcher ---'; echo 'IP Address: 192.168.1.10'; echo 'Port: 11434'; echo 'Model: llama3'; echo '--------------------------'; echo 'Starting Ollama server...'; OLLAMA_HOST=http://'192.168.1.10':'11434' ollama serve"
-	set actual_command to CommandBuilder's buildServerCommand(ip, port, model)
+	set expected_command to "echo '--- Private LLM Launcher ---'; echo 'IP Address: 192.168.1.10'; echo 'Port: 11434'; echo 'Model: tinyllama'; echo '--------------------------'; echo 'Starting Ollama server...'; OLLAMA_HOST=http://'192.168.1.10':'11434' ollama serve"
+	set actual_command to CommandBuilder's buildServerCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildServerCommand: PASSED"
@@ -46,11 +46,11 @@ end try
 -- Test buildModelCommand
 try
 	log "Testing buildModelCommand..."
-	set ip to "127.0.0.1"
-	set port to "8080"
-	set model to "mistral"
-	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'mistral'"
-	set actual_command to CommandBuilder's buildModelCommand(ip, port, model)
+	set test_ip to "127.0.0.1"
+	set test_port to "8080"
+	set test_model to "tinyllama"
+	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'tinyllama'"
+	set actual_command to CommandBuilder's buildModelCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildModelCommand: PASSED"
@@ -66,11 +66,11 @@ end try
 -- Test escaping of potentially malicious input
 try
 	log "Testing buildModelCommand with malicious input..."
-	set ip to "127.0.0.1"
-	set port to "8080"
-	set model to "nonexistent; reboot"
+	set test_ip to "127.0.0.1"
+	set test_port to "8080"
+	set test_model to "nonexistent; reboot"
 	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'nonexistent; reboot'"
-	set actual_command to CommandBuilder's buildModelCommand(ip, port, model)
+	set actual_command to CommandBuilder's buildModelCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildModelCommand (malicious input): PASSED"

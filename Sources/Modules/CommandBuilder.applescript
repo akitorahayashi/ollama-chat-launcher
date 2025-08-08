@@ -31,5 +31,8 @@ end buildModelCommand
 
 -- シェルパラメータを安全にエスケープする
 on escapeShellParameter(param)
-	return "'" & text 1 thru -2 of (do shell script "printf '%s' " & quoted form of param) & "'"
+	-- パラメータを文字列に変換してからエスケープ
+	set param_as_string to param as string
+	-- quoted formで既に安全にエスケープされているので、そのまま使用
+	return quoted form of param_as_string
 end escapeShellParameter

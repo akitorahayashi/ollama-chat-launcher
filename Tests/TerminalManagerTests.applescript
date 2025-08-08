@@ -9,14 +9,14 @@ on get_project_root()
 end get_project_root
 
 set project_root to my get_project_root()
-set modules_path to project_root & "Sources:Modules:"
+set modules_path to project_root & "build:modules:"
 
 -- Load the module to be tested
 try
-	set TerminalManager to load script file (modules_path & "TerminalManager.applescript")
+	set TerminalManager to load script file (modules_path & "TerminalManager.scpt")
 on error err_msg
 	log "SETUP ERROR: " & err_msg
-	return
+	error "Test setup failed: " & err_msg
 end try
 
 -- Helper to wait for a condition to become true, to avoid flaky tests with fixed delays

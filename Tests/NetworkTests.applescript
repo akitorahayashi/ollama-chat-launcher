@@ -1,23 +1,35 @@
+-- Get the path to the parent directory of the current script's directory (i.e., the project root)
+on get_project_root()
+	set script_path to path to me
+	tell application "Finder"
+		set script_container to container of script_path as text
+		set project_root to container of (alias script_container) as text
+	end tell
+	return project_root
+end get_project_root
+
+set project_root to my get_project_root()
+
 -- Load the module to be tested
-set module_path to (path to me as text) & "::build:modules:Network.scpt"
+set module_path to project_root & "build:modules:Network.scpt"
 try
     alias module_path
 on error
     log "SETUP ERROR: Network.scpt not found at " & module_path
-    return
+    error "Test setup failed: Network.scpt not found"
 end try
 set Network to load script alias module_path
 
 -- Test getWifiIP
 -- Test getIPAddress
 try
-    set ip to Network's getIPAddress()
+    set test_ip to Network's getIPAddress()
     -- The function should always return a string (either a found IP or the fallback 127.0.0.1).
     -- A simple validation is to check if the string is not empty and contains dots.
-    if ip is not "" and ip contains "." then
-        log "Test getIPAddress: PASSED - Received: " & ip
+    if test_ip is not "" and test_ip contains "." then
+        log "Test getIPAddress: PASSED - Received: " & test_ip
     else
-        log "Test getIPAddress: FAILED - Invalid IP address received: " & ip
+        log "Test getIPAddress: FAILED - Invalid IP address received: " & test_ip
     end if
 on error e
     log "Test getIPAddress: FAILED - " & e
