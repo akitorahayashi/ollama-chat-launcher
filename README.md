@@ -44,7 +44,7 @@ This command compiles the source files from `Sources/Modules/` into executable s
 
 ### 3. Run from Script Editor
 
-Run the main script `Sources/Main.applescript` directly from the Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window.
+Run the main script `Sources/Main.applescript` directly from the Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window. On first run, macOS may prompt for Automation permissions to control Terminal—please allow it.
 
 ### 4. Create a Standalone Application
 
@@ -52,7 +52,7 @@ You can create a standalone `.app` for easier access.
 
 1.  Open `Sources/Main.applescript` in Script Editor.
 2.  Choose `File > Export...` and set the `File Format` to `Application`.
-3.  Manually create a `Modules` directory inside your new app's bundle at this path: `YourApp.app/Contents/Resources/Modules/`.
+3.  In Finder, right-click the exported app and choose “Show Package Contents”, then create a `Modules` directory at: `YourApp.app/Contents/Resources/Modules/`.
 4.  Copy the compiled modules from `build/modules/` into the `Modules` directory you just created.
 5.  If you ever run `make build` again, you must re-copy the updated `.scpt` files into the app bundle.
 
