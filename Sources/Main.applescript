@@ -2,7 +2,7 @@
 -- ==========================================
 -- Module Loading
 -- ==========================================
-global Network, WindowManager, ServerManager, TerminalManager, CommandBuilder
+global Network, ServerManager, TerminalManager, CommandBuilder
 
 on loadModules()
 	try
@@ -15,7 +15,6 @@ on loadModules()
 
 		-- 全てのモジュールをロードする
 		set Network to load script alias (compiled_modules_folder & "Network.scpt")
-		set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
 		set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
 		set TerminalManager to load script alias (compiled_modules_folder & "TerminalManager.scpt")
 		set CommandBuilder to load script alias (compiled_modules_folder & "CommandBuilder.scpt")
@@ -76,7 +75,7 @@ end runWithConfiguration
 -- Internal Flow Control Functions (Orchestration)
 -- ==========================================
 on startChatInExistingServer(ip_address, modelName, ollamaPort)
-	set server_info to WindowManager's findLatestServerWindow(ip_address, ollamaPort)
+	set server_info to TerminalManager's findLatestServerWindow(ip_address, ollamaPort)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 
@@ -90,9 +89,9 @@ end startChatInExistingServer
 
 on startNewServerAndChat(ip_address, modelName, ollamaPort)
 	-- 1. 各モジュールに問い合わせ、必要な情報を収集・生成
-	set next_seq to (WindowManager's getMaxSequenceNumber(ip_address, ollamaPort) + 1)
+	set next_seq to (TerminalManager's getMaxSequenceNumber(ip_address, ollamaPort) + 1)
 	set server_command to CommandBuilder's buildServerCommand(ip_address, ollamaPort, modelName)
-	set server_title to WindowManager's generateWindowTitle(ip_address, next_seq, "server", ollamaPort, modelName)
+	set server_title to TerminalManager's generateWindowTitle(ip_address, next_seq, "server", ollamaPort, modelName)
 
 	-- 2. TerminalManagerに指示を出し、サーバーを起動
 	set new_server_window to TerminalManager's createNewWindowWithCommand(server_command)
@@ -111,7 +110,7 @@ end startNewServerAndChat
 on executeModelInWindow(target_window, ip_address, sequence_number, model_name, ollama_port)
 	-- 1. コマンドとタイトルを生成
 	set model_command to CommandBuilder's buildModelCommand(ip_address, ollama_port, model_name)
-	set tab_title to WindowManager's generateWindowTitle(ip_address, sequence_number, "chat", ollama_port, model_name)
+	set tab_title to TerminalManager's generateWindowTitle(ip_address, sequence_number, "chat", ollama_port, model_name)
 
 	-- 2. TerminalManagerに指示を出し、新しいタブでモデルを実行
 	set new_tab to TerminalManager's openNewTabInWindow(target_window, model_command)

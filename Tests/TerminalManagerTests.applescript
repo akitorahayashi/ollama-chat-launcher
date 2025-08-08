@@ -123,4 +123,85 @@ finally
 	my cleanup_window(parent_window)
 end try
 
+-- =================================================
+-- Tests from former WindowManagerTests.applescript
+-- =================================================
+
+-- Test generateWindowTitle
+try
+	set title1 to TerminalManager's generateWindowTitle("192.168.1.1", 1, "server", 8080, "tinyllama")
+	if title1 is "Ollama Server #1 [192.168.1.1:8080]" then
+		log "Test generateWindowTitle (server): PASSED"
+	else
+		log "Test generateWindowTitle (server): FAILED - Expected 'Ollama Server #1 [192.168.1.1:8080]', got '" & title1 & "'"
+	end if
+on error e
+	log "Test generateWindowTitle (server): FAILED - " & e
+end try
+
+try
+	-- Test for chat window title
+	set title2 to TerminalManager's generateWindowTitle("192.168.1.1", 2, "chat", 8080, "tinyllama")
+	if title2 is "Ollama Chat #2 [192.168.1.1:8080] (tinyllama)" then
+		log "Test generateWindowTitle (chat): PASSED"
+	else
+		log "Test generateWindowTitle (chat): FAILED - Unexpected title: " & title2
+	end if
+on error e
+	log "Test generateWindowTitle (chat): FAILED - " & e
+end try
+
+-- The following tests require a running Terminal application and will create windows.
+-- Test getMaxSequenceNumber
+set test_window to missing value
+try
+	log "Testing getMaxSequenceNumber..."
+	-- Programmatically create a dummy window for the test
+	tell application "Terminal"
+		activate
+		set test_window to do script ""
+		set custom title of test_window to "Ollama Server #3 [127.0.0.1:12345]"
+	end tell
+	delay 0.5 -- Give terminal time to process
+
+	set max_seq to TerminalManager's getMaxSequenceNumber("127.0.0.1", 12345)
+
+	if max_seq is 3 then
+		log "Test getMaxSequenceNumber: PASSED"
+	else
+		log "Test getMaxSequenceNumber: FAILED - Expected 3, got " & max_seq
+	end if
+on error e
+	log "Test getMaxSequenceNumber: FAILED - " & e
+finally
+	my cleanup_window(test_window)
+end try
+
+-- Test findLatestServerWindow
+set test_window to missing value
+try
+	log "Testing findLatestServerWindow..."
+	-- Programmatically create a dummy window for the test
+	tell application "Terminal"
+		activate
+		set test_window to do script ""
+		set custom title of test_window to "Ollama Server #5 [127.0.0.1:54321]"
+	end tell
+	delay 0.5 -- Give terminal time to process
+
+	set server_info to TerminalManager's findLatestServerWindow("127.0.0.1", 54321)
+
+
+	if server_info's sequence is 5 then
+		log "Test findLatestServerWindow: PASSED"
+	else
+		log "Test findLatestServerWindow: FAILED - Expected sequence 5, got " & server_info's sequence
+	end if
+on error e
+	log "Test findLatestServerWindow: FAILED - " & e
+finally
+	my cleanup_window(test_window)
+end try
+
+
 log "TerminalManager tests complete."
