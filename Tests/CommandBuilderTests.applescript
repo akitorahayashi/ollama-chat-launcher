@@ -26,7 +26,9 @@ try
 	set ip to "192.168.1.10"
 	set port to "11434"
 	set model to "llama3"
-	set expected_command to "echo '--- Private LLM Launcher ---'; echo 'IP Address: 192.168.1.10'; echo 'Port: 11434'; echo 'Model: llama3'; echo '--------------------------'; echo 'Starting Ollama server...'; OLLAMA_HOST=192.168.1.10:11434 ollama serve"
+	-- Note: The display part of the command still uses unescaped params, which is correct.
+	-- The executable part uses escaped params.
+	set expected_command to "echo '--- Private LLM Launcher ---'; echo 'IP Address: 192.168.1.10'; echo 'Port: 11434'; echo 'Model: llama3'; echo '--------------------------'; echo 'Starting Ollama server...'; OLLAMA_HOST=http://'192.168.1.10':'11434' ollama serve"
 	set actual_command to CommandBuilder's buildServerCommand(ip, port, model)
 
 	if actual_command = expected_command then
@@ -47,7 +49,7 @@ try
 	set ip to "127.0.0.1"
 	set port to "8080"
 	set model to "mistral"
-	set expected_command to "OLLAMA_HOST=http://127.0.0.1:8080 ollama run mistral"
+	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'mistral'"
 	set actual_command to CommandBuilder's buildModelCommand(ip, port, model)
 
 	if actual_command = expected_command then
@@ -60,5 +62,26 @@ try
 on error e
 	log "Test buildModelCommand: FAILED with error: " & e
 end try
+
+-- Test escaping of potentially malicious input
+try
+	log "Testing buildModelCommand with malicious input..."
+	set ip to "127.0.0.1"
+	set port to "8080"
+	set model to "nonexistent; reboot"
+	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'nonexistent; reboot'"
+	set actual_command to CommandBuilder's buildModelCommand(ip, port, model)
+
+	if actual_command = expected_command then
+		log "Test buildModelCommand (malicious input): PASSED"
+	else
+		log "Test buildModelCommand (malicious input): FAILED"
+		log "Expected: " & expected_command
+		log "Actual:   " & actual_command
+	end if
+on error e
+	log "Test buildModelCommand (malicious input): FAILED with error: " & e
+end try
+
 
 log "CommandBuilder tests complete."

@@ -5,20 +5,51 @@
 global Network, WindowManager, ServerManager, TerminalManager, CommandBuilder
 
 on loadModules()
-	set script_path to path to me
-	tell application "Finder"
-		set script_container to container of script_path as text
-	end tell
-	-- buildディレクトリ内のコンパイル済みモジュールをロード
-	set compiled_modules_folder to (script_container & "build:modules:")
+	try
+		set script_path to path to me
+		tell application "Finder"
+			set script_container to container of script_path as text
+		end tell
+		-- buildディレクトリ内のコンパイル済みモジュールをロード
+		set compiled_modules_folder to (script_container & "build:modules:")
 
-	-- 全てのモジュールをロードする
-	set Network to load script alias (compiled_modules_folder & "Network.scpt")
-	set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
-	set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
-	set TerminalManager to load script alias (compiled_modules_folder & "TerminalManager.scpt")
-	set CommandBuilder to load script alias (compiled_modules_folder & "CommandBuilder.scpt")
+		-- 全てのモジュールをロードする
+		set Network to load script alias (compiled_modules_folder & "Network.scpt")
+		set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
+		set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
+		set TerminalManager to load script alias (compiled_modules_folder & "TerminalManager.scpt")
+		set CommandBuilder to load script alias (compiled_modules_folder & "CommandBuilder.scpt")
+		log "全モジュールの読み込みが完了しました"
+	on error error_message
+		log "モジュール読み込みエラー: " & error_message
+		error "Failed to load required modules: " & error_message
+	end try
 end loadModules
+
+-- ==========================================
+-- Parameter Validation
+-- ==========================================
+on validateParameters(ip_address, port, model_name)
+	-- IPアドレスの基本的な形式チェック
+	if ip_address does not contain "." then
+		error "Invalid IP address format: " & ip_address
+	end if
+
+	-- ポート番号の範囲チェック
+	try
+		set port_number to port as integer
+		if port_number < 1 or port_number > 65535 then
+			error "Port number out of valid range (1-65535): " & port
+		end if
+	on error
+		error "Invalid port number: " & port
+	end try
+
+	-- モデル名の基本チェック
+	if length of model_name = 0 then
+		error "Model name cannot be empty"
+	end if
+end validateParameters
 
 -- ==========================================
 -- Public API
@@ -27,6 +58,8 @@ on runWithConfiguration(modelName, ollamaPort, overrideIP)
 	my loadModules()
 	try
 		set ip_to_use to Network's getIPAddress(overrideIP)
+		my validateParameters(ip_to_use, ollamaPort, modelName)
+
 		if Network's isPortInUse(ollamaPort, ip_to_use) then
 			log "An existing server process was found on port " & ollamaPort
 			my startChatInExistingServer(ip_to_use, modelName, ollamaPort)

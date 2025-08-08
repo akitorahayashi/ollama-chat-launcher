@@ -47,3 +47,11 @@ jobs:
       - name: Test TerminalManager Module
         continue-on-error: true
         run: make test-TerminalManager
+
+  test-Main:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Main Script
+        continue-on-error: true
+        run: make test-Main
