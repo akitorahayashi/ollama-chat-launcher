@@ -24,19 +24,26 @@ This project uses a `Makefile` to simplify common tasks.
 
 ### Build the Project
 
-This command compiles all the necessary AppleScript modules and the main library into the `build/` directory.
+This command compiles all the necessary AppleScript modules and the main library into the `build/` directory. You must run this before executing any entry point scripts.
 
 ```bash
 make build
 ```
 
-### Run the Application
+### Running the Application
 
-This command executes the default entry point script (`Tinyllama.applescript`). This will start the Ollama server with the configuration defined in that file.
+After building the project, you can run any of the model-specific entry point scripts. These scripts, like `Tinyllama.applescript`, define which model to run and on which port.
 
-```bash
-make run
-```
+There are two primary ways to run an entry point script:
+
+1.  **Using the command line:**
+    Open your terminal, navigate to the project directory, and use `osascript`:
+    ```bash
+    osascript Tinyllama.applescript
+    ```
+
+2.  **Using Script Editor:**
+    Open the entry point script (e.g., `Tinyllama.applescript`) in the Script Editor application and click the "Run" button.
 
 ### Run Tests
 
@@ -48,7 +55,7 @@ make test
 
 ## Configuration
 
-To change the model or port, you can edit the entry point script (`Tinyllama.applescript`) or create a new one.
+To change the model or port, you can create and edit entry point scripts. The project is designed to support multiple configurations for different models (e.g., `Tinyllama.applescript`, `Gemma.applescript`).
 
 ### Example: `Tinyllama.applescript`
 
@@ -76,8 +83,8 @@ on error err
 end try
 ```
 
-### Creating a New Configuration
+### Creating a New Model Entrypoint
 
-1.  Create a copy of `Tinyllama.applescript` and name it something descriptive (e.g., `Gemma.applescript`).
-2.  Edit the `MODEL_NAME` and `OLLAMA_PORT` properties in your new file.
-3.  To run your new configuration, you can either execute it directly with `osascript` or update the `run` target in the `Makefile` to point to your new script.
+1.  Create a copy of an existing entry point script (like `Tinyllama.applescript`) and give it a descriptive name (e.g., `Gemma.applescript`).
+2.  Open the new file and edit the `MODEL_NAME` and `OLLAMA_PORT` properties to match your desired configuration.
+3.  Run your new script using one of the methods described in the "Running the Application" section.
