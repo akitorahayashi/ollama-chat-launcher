@@ -14,19 +14,19 @@ global Network, ServerManager, CommandBuilder, WindowManager
 
 on loadModule(moduleName)
 	try
-		-- If running as an app, load from the bundle's Resources
-		set modulePath to (path to resource (moduleName & ".scpt")) as text
+		-- Appとして実行中: Resources/Modules/moduleName.scpt を読み込む
+		set modulePath to (path to resource (moduleName & ".scpt") in directory "Modules") as alias
 		return load script file modulePath
 	on error errMsg number errNum
-		-- If running from Script Editor, load .scpt file from the build/modules folder
+		-- Script Editor等で実行中: build/modules/moduleName.scpt を読み込む
 		try
 			tell application "Finder"
 				set scriptFolder to container of (path to me) as text
-				-- Go up one level from Sources to project root, then to build/modules
 				set projectRoot to container of (scriptFolder as alias) as text
 			end tell
 			set modulePath to projectRoot & "build:modules:" & moduleName & ".scpt"
-			return load script file modulePath
+			set moduleAlias to alias modulePath
+			return load script file moduleAlias
 		on error innerErrMsg number innerErrNum
 			error "Failed to load module " & moduleName & ": " & innerErrMsg number innerErrNum
 		end try
