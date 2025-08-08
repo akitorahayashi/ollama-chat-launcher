@@ -44,21 +44,30 @@ on waitForServer(ollama_port, Network)
         end tell
     end createNewTerminalWindow
 
-    on startOllamaServer(wifi_ip, ollama_port, model_name, WindowManager)
-        set next_seq to (WindowManager's getMaxSequenceNumber(wifi_ip, ollama_port) + 1)
-        set window_title to WindowManager's generateWindowTitle(wifi_ip, next_seq, "server", ollama_port, model_name)
-        set command to "OLLAMA_HOST=" & wifi_ip & ":" & ollama_port & " ollama serve"
+on startOllamaServer(ip_address, ollama_port, model_name, WindowManager)
+    set next_seq to (WindowManager's getMaxSequenceNumber(ip_address, ollama_port) + 1)
+    set window_title to WindowManager's generateWindowTitle(ip_address, next_seq, "server", ollama_port, model_name)
 
-        set new_window to my createNewTerminalWindow(command)
+    set display_command to "echo '--- Private LLM Launcher ---'; " & ¬
+        "echo 'IP Address: " & ip_address & "'; " & ¬
+        "echo 'Port: " & ollama_port & "'; " & ¬
+        "echo 'Model: " & model_name & "'; " & ¬
+        "echo '--------------------------'; " & ¬
+        "echo 'Starting Ollama server...';"
+
+    set server_command to "OLLAMA_HOST=" & ip_address & ":" & ollama_port & " ollama serve"
+    set final_command to display_command & " " & server_command
+
+    set new_window to my createNewTerminalWindow(final_command)
         my setTerminalTitle(new_window, window_title)
 
         return {window:new_window, sequence:next_seq}
     end startOllamaServer
 
-    on validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name, WindowManager)
+on validateServerWindow(target_window, ip_address, sequence_number, ollama_port, model_name, WindowManager)
         if target_window is missing value then
             set msg to "Ollama server window not found."
-            set details to "Search criteria: IP=" & wifi_ip & ", PORT=" & ollama_port & return & "Expected window name: " & WindowManager's generateWindowTitle(wifi_ip, sequence_number, "server", ollama_port, model_name)
+        set details to "Search criteria: IP=" & ip_address & ", PORT=" & ollama_port & return & "Expected window name: " & WindowManager's generateWindowTitle(ip_address, sequence_number, "server", ollama_port, model_name)
 
             tell application "Terminal"
                 set details to details & return & "Current Terminal window list:"
@@ -72,11 +81,11 @@ on waitForServer(ollama_port, Network)
         end if
     end validateServerWindow
 
-    on executeOllamaModel(target_window, wifi_ip, sequence_number, model_name, ollama_port, WindowManager)
-        my validateServerWindow(target_window, wifi_ip, sequence_number, ollama_port, model_name, WindowManager)
+on executeOllamaModel(target_window, ip_address, sequence_number, model_name, ollama_port, WindowManager)
+    my validateServerWindow(target_window, ip_address, sequence_number, ollama_port, model_name, WindowManager)
 
-        set command to "OLLAMA_HOST=http://" & wifi_ip & ":" & ollama_port & " ollama run " & model_name
+    set command to "OLLAMA_HOST=http://" & ip_address & ":" & ollama_port & " ollama run " & model_name
         set new_tab to my openNewTerminalTab(target_window, command)
-    set tab_title to WindowManager's generateWindowTitle(wifi_ip, sequence_number, "chat", ollama_port, model_name)
+    set tab_title to WindowManager's generateWindowTitle(ip_address, sequence_number, "chat", ollama_port, model_name)
     my setTerminalTitle(new_tab, tab_title)
 end executeOllamaModel

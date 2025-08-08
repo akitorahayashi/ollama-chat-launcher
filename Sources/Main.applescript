@@ -22,11 +22,11 @@ end loadModules
 on runWithConfiguration(modelName, ollamaPort)
 	my loadModules()
 	try
-		set wifi_ip to Network's getWifiIP()
+		set ip_address to Network's getIPAddress()
 		if Network's isPortInUse(ollamaPort) then
-			my handleExistingServer(wifi_ip, modelName, ollamaPort)
+			my handleExistingServer(ip_address, modelName, ollamaPort)
 		else
-			my handleNewServer(wifi_ip, modelName, ollamaPort)
+			my handleNewServer(ip_address, modelName, ollamaPort)
 		end if
 	on error error_message
 		log "Execution Error: An error occurred: " & error_message
@@ -36,24 +36,24 @@ end runWithConfiguration
 -- ==========================================
 -- Internal Flow Control Functions
 -- ==========================================
-on handleExistingServer(wifi_ip, modelName, ollamaPort)
-	set server_info to WindowManager's findLatestServerWindow(wifi_ip, ollamaPort)
+on handleExistingServer(ip_address, modelName, ollamaPort)
+	set server_info to WindowManager's findLatestServerWindow(ip_address, ollamaPort)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if server_window is not missing value then
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, modelName, ollamaPort, WindowManager)
+		ServerManager's executeOllamaModel(server_window, ip_address, sequence_number, modelName, ollamaPort, WindowManager)
 	else
-		my handleNewServer(wifi_ip, modelName, ollamaPort)
+		my handleNewServer(ip_address, modelName, ollamaPort)
 	end if
 end handleExistingServer
 
-on handleNewServer(wifi_ip, modelName, ollamaPort)
-	set server_info to ServerManager's startOllamaServer(wifi_ip, ollamaPort, modelName, WindowManager)
+on handleNewServer(ip_address, modelName, ollamaPort)
+	set server_info to ServerManager's startOllamaServer(ip_address, ollamaPort, modelName, WindowManager)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
 	if ServerManager's waitForServer(ollamaPort, Network) then
 		delay 1 -- Wait for the server to fully start
-		ServerManager's executeOllamaModel(server_window, wifi_ip, sequence_number, modelName, ollamaPort, WindowManager)
+		ServerManager's executeOllamaModel(server_window, ip_address, sequence_number, modelName, ollamaPort, WindowManager)
 	else
 		log "Startup Failed: Failed to start the server."
 	end if
