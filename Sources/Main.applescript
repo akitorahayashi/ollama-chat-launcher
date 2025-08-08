@@ -3,11 +3,7 @@
 -- ==========================================
 property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55764
--- Optional: Manually specify the IP address for the server.
--- If set to 'missing value', the script will automatically use the active
--- Wi-Fi IP address, or fall back to localhost (127.0.0.1).
--- This is useful for setups like macOS Internet Sharing (e.g., "192.168.2.1").
--- Example: property OVERRIDE_IP_ADDRESS : "192.168.2.1"
+-- Optional: Manually specify the server's IP address. If not set, the Wi-Fi IP is used, falling back to localhost if Wi-Fi is off.
 property OVERRIDE_IP_ADDRESS : missing value
 
 
@@ -16,27 +12,29 @@ property OVERRIDE_IP_ADDRESS : missing value
 -- ==========================================
 global Network, ServerManager, CommandRunner, WindowManager
 
-on loadModules()
+on loadModule(moduleName)
 	try
-		set script_path to path to me
-		tell application "Finder"
-			set script_container to container of script_path as text
-		end tell
-		
-		-- ビルドディレクトリ内のコンパイル済みモジュールをロード
-		set compiled_modules_folder to (script_container & "modules:")
-
-		-- 全てのモジュールをロードする
-		set Network to load script alias (compiled_modules_folder & "Network.scpt")
-		set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
-		set CommandRunner to load script alias (compiled_modules_folder & "CommandRunner.scpt")
-		set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
-		log "All modules loaded successfully."
-	on error error_message
-		log "Module loading error: " & error_message
-		error "Failed to load required modules: " & error_message
+		-- If running as an app, load from the bundle's Resources
+		set modulePath to (path to resource (moduleName & ".scpt")) as text
+	on error errMsg number errNum
+		-- If running from Script Editor, load .applescript file from the development folder
+		try
+			tell application "Finder"
+				set scriptFolder to container of (path to me) as text
+			end tell
+			set modulePath to scriptFolder & "Modules:" & moduleName & ".applescript"
+		on error innerErrMsg number innerErrNum
+			error "Failed to determine module path: " & innerErrMsg number innerErrNum
+		end try
 	end try
-end loadModules
+
+	-- Load the module
+	try
+		return load script file modulePath
+	on error loadErrMsg loadErrNum
+		error "Failed to load script file at " & modulePath & ": " & loadErrMsg number loadErrNum
+	end try
+end loadModule
 
 -- ==========================================
 -- Parameter Validation
@@ -110,7 +108,11 @@ end executeModelInWindow
 -- Main Execution Block
 -- ==========================================
 try
-	my loadModules()
+	-- Load all modules
+	set Network to my loadModule("Network")
+	set ServerManager to my loadModule("ServerManager")
+	set CommandRunner to my loadModule("CommandRunner")
+	set WindowManager to my loadModule("WindowManager")
 
 	set ip_to_use to Network's getIPAddress(OVERRIDE_IP_ADDRESS)
 	my validateParameters(ip_to_use, OLLAMA_PORT, MODEL_NAME)
