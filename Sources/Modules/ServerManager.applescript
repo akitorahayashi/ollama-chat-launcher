@@ -4,9 +4,9 @@
 property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.5
 
-on round(n)
+on roundDown(n)
 	return n div 1
-end round
+end roundDown
 
 on isOllamaServerRunning(ip_address, port)
 	try
@@ -42,7 +42,7 @@ on waitForServer(ip_address, ollama_port, Network)
 			return false
 		end if
 		if (elapsed - last_log_time) > 5 then
-			log "Waiting... " & (round(elapsed) as string) & "s / " & (SERVER_STARTUP_TIMEOUT as string) & "s"
+			log "Waiting... " & (my roundDown(elapsed) as string) & "s / " & (SERVER_STARTUP_TIMEOUT as string) & "s"
 			set last_log_time to elapsed
 		end if
 	end repeat

@@ -34,7 +34,7 @@ test: build
 	else \
 		set -euo pipefail; \
 		for test_file in $(TEST_FILES); do \
-			echo "\n----- Running $$test_file -----"; \
+			printf '\n----- Running %s -----\n' "$$test_file"; \
 			if ! osascript "$$test_file" 2>&1; then \
 				echo "Test $$test_file failed with error"; \
 				exit 1; \

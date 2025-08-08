@@ -12,7 +12,8 @@ This project provides a modular AppleScript framework for automatically starting
 ## Prerequisites
 
 - macOS with AppleScript support.
-- Ollama installed and accessible in your system's path.
+- Ollama installed and accessible via your `PATH` environment variable.
+  - Install guide: https://ollama.com/download
 
 ## How to Use
 
@@ -25,11 +26,11 @@ Open `Sources/Main.applescript` and edit the properties at the top to match your
 -- Configuration
 -- ==========================================
 property MODEL_NAME : "tinyllama"
-property OLLAMA_PORT : 55765
+property OLLAMA_PORT : 11434 -- Default Ollama port. Change only if you intentionally use a different instance.
 -- Optional: Manually specify the server's IP address.
 property OVERRIDE_IP_ADDRESS : missing value
--- Optional: Specify a custom path for Ollama models.
-property OLLAMA_MODELS_PATH : "~/.ollama/models"
+-- Optional: Specify a custom path for Ollama models. Use $HOME instead of ~ for reliability.
+property OLLAMA_MODELS_PATH : "$HOME/.ollama/models"
 ```
 
 ### 2. Build the Modules
@@ -43,7 +44,7 @@ This command compiles the source files from `Sources/Modules/` into executable s
 
 ### 3. Run from Script Editor
 
-Run the main script `Sources/Main.applescript` directly from the Apple Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window.
+Run the main script `Sources/Main.applescript` directly from the Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window.
 
 ### 4. Create a Standalone Application
 
@@ -51,7 +52,9 @@ You can create a standalone `.app` for easier access.
 
 1.  Open `Sources/Main.applescript` in Script Editor.
 2.  Choose `File > Export...` and set the `File Format` to `Application`.
-3.  After exporting, you must manually copy the compiled modules from `build/modules/` into your app's bundle. The destination path inside the app is: `YourApp.app/Contents/Resources/Modules/`.
+3.  Manually create a `Modules` directory inside your new app's bundle at this path: `YourApp.app/Contents/Resources/Modules/`.
+4.  Copy the compiled modules from `build/modules/` into the `Modules` directory you just created.
+5.  If you ever run `make build` again, you must re-copy the updated `.scpt` files into the app bundle.
 
 The script is designed to look for modules in this location when it's run as a standalone application.
 
