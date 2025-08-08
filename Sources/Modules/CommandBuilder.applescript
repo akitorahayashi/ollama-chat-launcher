@@ -2,42 +2,33 @@
 -- This module is responsible for building shell command strings only.
 -- It does NOT execute commands - that is the responsibility of the caller.
 
--- ==========================================
--- Command Building API
--- ==========================================
+on buildServerCommand(ip_address, port, model_name, ollama_models_path)
+	-- Only escape parameters that might contain spaces or special characters.
+	set escaped_model_name to my escapeShellParameter(model_name)
+	set escaped_models_path to my escapeShellParameter(ollama_models_path)
 
-on buildServerCommand(ip_address, port, model_name)
-	-- パラメータをエスケープしてインジェクションを防ぐ
-	set escaped_ip to my escapeShellParameter(ip_address)
-	set escaped_port to my escapeShellParameter(port)
-
-	-- 表示用のコマンド (エスケープされていない値を表示)
 	set display_command to "echo '--- Private LLM Launcher ---'; " & ¬
 		"echo 'IP Address: " & ip_address & "'; " & ¬
 		"echo 'Port: " & port & "'; " & ¬
 		"echo 'Model: " & model_name & "'; " & ¬
+		"echo 'Models Path: " & ollama_models_path & "'; " & ¬
 		"echo '--------------------------'; " & ¬
 		"echo 'Starting Ollama server...';"
 
-	-- 実行用のコマンド (エスケープされた値を使用)
-	set server_command to "OLLAMA_HOST=http://" & escaped_ip & ":" & escaped_port & " ollama serve"
+	-- IP and Port are not escaped as they are part of the URL and are not expected to have spaces.
+	set server_command to "OLLAMA_MODELS=" & escaped_models_path & " OLLAMA_HOST=http://" & ip_address & ":" & port & " ollama serve"
 	return display_command & " " & server_command
 end buildServerCommand
 
 on buildModelCommand(ip_address, port, model_name)
-	-- パラメータをエスケープしてインジェクションを防ぐ
-	set escaped_ip to my escapeShellParameter(ip_address)
-	set escaped_port to my escapeShellParameter(port)
+	-- Only escape parameters that might contain spaces or special characters.
 	set escaped_model to my escapeShellParameter(model_name)
 
-	-- 実行用のコマンド (エスケープされた値を使用)
-	return "OLLAMA_HOST=http://" & escaped_ip & ":" & escaped_port & " ollama run " & escaped_model
+	-- IP and Port are not escaped as they are part of the URL.
+	return "OLLAMA_HOST=http://" & ip_address & ":" & port & " ollama run " & escaped_model
 end buildModelCommand
 
--- シェルパラメータを安全にエスケープする
 on escapeShellParameter(param)
-	-- パラメータを文字列に変換してからエスケープ
 	set param_as_string to param as string
-	-- quoted formで既に安全にエスケープされているので、そのまま使用
 	return quoted form of param_as_string
 end escapeShellParameter

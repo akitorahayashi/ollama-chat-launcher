@@ -1,62 +1,70 @@
 ## Overview
 
-This project provides a modular AppleScript framework for automatically starting and managing an Ollama server and interacting with different language models directly from your terminal.
+This project provides a modular AppleScript framework for automatically starting and managing local Ollama servers, making it easy to interact with different language models directly from your terminal.
 
-The main script (`Sources/Main.applescript`) is designed to be run from the Script Editor during development. It can also be manually saved as a standalone `.app` from the Script Editor.
+## Features
 
-## Project Structure
-
-- `Sources/`: Contains all the AppleScript source code.
-  - `Main.applescript`: The main entry point and logic for the application. All configuration is handled within this file.
-  - `Modules/`: Contains helper modules for tasks like networking and window management.
-- `Makefile`: Provides convenient commands for compiling modules and running tests.
+- **Automatic Server Management**: Automatically starts a new Ollama server if one isn't running on the configured IP and port.
+- **Smart Window Handling**: If a server is already running, the script finds the existing Terminal window and opens a new tab for a chat session instead of creating a new server.
+- **Dynamic IP Detection**: Automatically uses your local Wi-Fi IP address, or falls back to `localhost` if Wi-Fi is disconnected. You can also override this with a static IP.
+- **Easy Configuration**: All settings are managed via properties at the top of the main script.
 
 ## Prerequisites
 
 - macOS with AppleScript support.
-- Ollama installed.
+- Ollama installed and accessible via your `PATH` environment variable.
 
-## Development Workflow
+## How to Use
 
-### 1. Compile Modules
+### 1. Configure the Script
 
-The `Makefile` is used to compile the source modules in `Sources/Modules/` into script objects (`.scpt`) in the `build/modules/` directory. The test scripts depend on these compiled modules.
-
-```bash
-make build
-```
-This command only compiles the modules, it does not create an application.
-
-### 2. Running the Main Script
-
-The main script (`Sources/Main.applescript`) can be run directly from the Apple Script Editor. When run this way, it will load the raw `.applescript` module files from the `Sources/Modules` directory, allowing for rapid development and testing without needing to recompile each time.
-
-### 3. Running Tests
-
-The test suite can be run via the `Makefile`. This will first compile the modules and then execute the test scripts.
-
-```bash
-make test
-```
-
-## Configuration
-
-All configuration is handled directly within the `Sources/Main.applescript` file. To change the default model, port, or IP address, open this file and edit the properties at the top.
-
-### Example Configuration (`Sources/Main.applescript`)
+Open `Sources/Main.applescript` and edit the properties at the top to match your desired setup.
 
 ```applescript
 -- ==========================================
 -- Configuration
 -- ==========================================
 property MODEL_NAME : "tinyllama"
-property OLLAMA_PORT : 55764
--- Optional: Manually specify the server's IP address. If not set, the Wi-Fi IP is used, falling back to localhost if Wi-Fi is off.
+property OLLAMA_PORT : 11434 -- Default Ollama port. Change only if you intentionally use a different instance.
+-- Optional: Manually specify the server's IP address.
 property OVERRIDE_IP_ADDRESS : missing value
+-- Optional: Specify a custom path for Ollama models. Use $HOME instead of ~ for reliability.
+property OLLAMA_MODELS_PATH : "$HOME/.ollama/models"
 ```
 
-## Creating a Standalone Application
+### 2. Build the Modules
 
-You can create a standalone `.app` from the main script by opening `Sources/Main.applescript` in Script Editor and choosing `File > Export...`. Set the `File Format` to `Application`.
+The script is modular and requires its components to be compiled before the first run. The `Makefile` handles this process.
 
-The script includes logic to detect if it's running as an application. If so, it will attempt to load the compiled (`.scpt`) modules from its own `Contents/Resources` directory. For this to work, you must manually copy the compiled modules from `build/modules/` into your exported app's `Contents/Resources/` folder after exporting.
+```bash
+make build
+```
+This command compiles the source files from `Sources/Modules/` into executable script objects (`.scpt`) in the `build/modules/` directory.
+
+### 3. Run from Script Editor
+
+Run the main script `Sources/Main.applescript` directly from the Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window. On first run, macOS may prompt for Automation permissions to control Terminal—please allow it.
+
+### 4. Create a Standalone Application
+
+You can create a standalone `.app` for easier access.
+
+1.  Open `Sources/Main.applescript` in Script Editor.
+2.  Choose `File > Export...` and set the `File Format` to `Application`.
+3.  In Finder, right-click the exported app and choose “Show Package Contents”, then create a `Modules` directory at: `YourApp.app/Contents/Resources/Modules/`.
+4.  Copy the compiled modules from `build/modules/` into the `Modules` directory you just created.
+5.  If you ever run `make build` again, you must re-copy the updated `.scpt` files into the app bundle.
+
+The script is designed to look for modules in this location when it's run as a standalone application.
+
+## Development and How It Works
+
+- **`Sources/`**: Contains all AppleScript source code.
+  - `Main.applescript`: The main entry point and application logic.
+  - `Modules/`: Helper modules for tasks like networking, window management, and command construction.
+- **`build/`**: Directory for compiled script objects. This is created by the `Makefile`.
+- **`Makefile`**: Provides commands for building and cleaning the project.
+
+### Module Loading
+
+When you run `Main.applescript` from the Script Editor, it **always** loads the compiled (`.scpt`) modules from the `build/modules/` directory. It does **not** load the raw `.applescript` source files. Therefore, you must run `make build` after any changes to the modules for them to take effect.

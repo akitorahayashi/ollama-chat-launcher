@@ -1,41 +1,42 @@
 -- WindowManager.applescript
 -- This module handles window and tab creation, naming, and window searching functionality.
 
--- ==========================================
--- Public API - Window and Tab Creation
--- ==========================================
-
+-- Creates a new Terminal window and sets its title.
 on createNewWindow(title)
 	tell application "Terminal"
 		activate
-		-- Always create a new window, regardless of existing windows
+		-- Use UI scripting to ensure a new window is created and brought to the front.
 		tell application "System Events"
 			keystroke "n" using command down
 		end tell
-		delay 0.5
+		delay 0.5 -- Wait for the new window to be ready.
 		set new_window to front window
 		set custom title of new_window to title
 		return new_window
 	end tell
 end createNewWindow
 
+-- Opens a new tab in a given window.
 on openNewTabInWindow(target_window)
 	tell application "Terminal"
 		activate
 		set selected of target_window to true
+		-- Use UI scripting to create a new tab in the active window.
 		tell application "System Events"
 			keystroke "t" using command down
 		end tell
-		delay 0.5
+		delay 0.5 -- Wait for the new tab to be ready.
 		set new_tab to selected tab of front window
 		return new_tab
 	end tell
 end openNewTabInWindow
 
+-- Generates a standardized window title. Format: <sequence>.<model_name> Server [<ip>:<port>]
 on generateWindowTitle(wifi_ip, sequence_number, ollama_port, model_name)
 	return (sequence_number as text) & "." & model_name & " Server [" & wifi_ip & ":" & (ollama_port as text) & "]"
 end generateWindowTitle
 
+-- Finds the highest sequence number from existing server window titles to avoid duplicates.
 on getMaxSequenceNumber(wifi_ip, ollama_port)
 	set max_seq to 0
 	set server_windows to my _findServerWindows(wifi_ip, ollama_port)
@@ -47,6 +48,7 @@ on getMaxSequenceNumber(wifi_ip, ollama_port)
 	return max_seq
 end getMaxSequenceNumber
 
+-- Finds the most recent server window by looking for the highest sequence number in its title.
 on findLatestServerWindow(wifi_ip, ollama_port)
 	set max_seq to 0
 	set latest_window to missing value
@@ -73,10 +75,7 @@ on findLatestServerWindow(wifi_ip, ollama_port)
 	return {window:latest_window, sequence:latest_sequence}
 end findLatestServerWindow
 
--- ==========================================
--- Private API
--- ==========================================
-
+-- Private helper: Finds all Terminal windows matching the server title pattern.
 on _findServerWindows(wifi_ip, ollama_port)
 	set server_windows to {}
 	set expected_server_pattern to "[" & wifi_ip & ":" & ollama_port & "]"
@@ -86,7 +85,6 @@ on _findServerWindows(wifi_ip, ollama_port)
 				try
 					set window_title to custom title of w
 					if window_title contains "Server [" and window_title contains expected_server_pattern then
-						-- シーケンス番号を抽出
 						set seq_num to my _extractSequenceNumber(window_title)
 						if seq_num is not missing value then
 							copy {sequence:seq_num, window:w} to end of server_windows
@@ -94,7 +92,7 @@ on _findServerWindows(wifi_ip, ollama_port)
 						end if
 					end if
 				on error window_error
-					-- Skip this window if title cannot be read
+					-- Skip this window if its title cannot be read.
 				end try
 			end repeat
 		end tell
@@ -104,9 +102,10 @@ on _findServerWindows(wifi_ip, ollama_port)
 	return server_windows
 end _findServerWindows
 
+-- Private helper: Parses the sequence number from a window title (e.g., "1.model..." -> 1).
 on _extractSequenceNumber(window_title)
 	try
-		-- 先頭の数字＋.を抽出
+		-- Extract the number before the first ".".
 		set dot_pos to offset of "." in window_title
 		if dot_pos > 1 then
 			set seq_str to text 1 thru (dot_pos - 1) of window_title
