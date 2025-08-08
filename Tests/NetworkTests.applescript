@@ -9,15 +9,18 @@ end try
 set Network to load script alias module_path
 
 -- Test getWifiIP
+-- Test getIPAddress
 try
-    set ip to Network's getWifiIP()
-    if ip is not "" then
-        log "Test getWifiIP: PASSED"
+    set ip to Network's getIPAddress()
+    -- The function should always return a string (either a found IP or the fallback 127.0.0.1).
+    -- A simple validation is to check if the string is not empty and contains dots.
+    if ip is not "" and ip contains "." then
+        log "Test getIPAddress: PASSED - Received: " & ip
     else
-        log "Test getWifiIP: FAILED - IP address is empty"
+        log "Test getIPAddress: FAILED - Invalid IP address received: " & ip
     end if
 on error e
-    log "Test getWifiIP: FAILED - " & e
+    log "Test getIPAddress: FAILED - " & e
 end try
 
 -- Test isPortInUse
