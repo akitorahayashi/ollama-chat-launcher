@@ -13,7 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test Network Module
-        continue-on-error: true
         run: make test-Network
 
   test-ServerManager:
@@ -21,7 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test ServerManager Module
-        continue-on-error: true
         run: make test-ServerManager
 
   test-WindowManager:
@@ -29,7 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test WindowManager Module
-        continue-on-error: true
         run: make test-WindowManager
 
   test-CommandBuilder:
@@ -37,7 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test CommandBuilder Module
-        continue-on-error: true
         run: make test-CommandBuilder
 
   test-TerminalManager:
@@ -45,7 +41,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test TerminalManager Module
-        continue-on-error: true
         run: make test-TerminalManager
 
   test-Main:
@@ -53,5 +48,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test Main Script
-        continue-on-error: true
         run: make test-Main
