@@ -1,45 +1,43 @@
-# App Details
-APP_NAME = Tinyllama.app
-
 # Directories
 SOURCES_DIR = Sources
 MODULES_DIR = $(SOURCES_DIR)/Modules
+TESTS_DIR   = Tests
 BUILD_DIR   = build
-APP_PATH    = $(BUILD_DIR)/$(APP_NAME)
 
-# Temp directory for compiled modules
+# Directory for compiled modules
 COMPILED_MODULES_DIR = $(BUILD_DIR)/modules
 
 # Source files
-MAIN_SOURCE    = $(SOURCES_DIR)/Main.applescript
 MODULE_SOURCES = $(wildcard $(MODULES_DIR)/*.applescript)
 MODULE_NAMES   := $(basename $(notdir $(MODULE_SOURCES)))
+TEST_FILES     = $(wildcard $(TESTS_DIR)/*Tests.applescript)
 
-# Paths for compiled modules in the temp directory
+# Paths for compiled modules
 COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 
 # Default target
 all: build
 
-# Main build target that depends on the final app
-build: $(APP_PATH)
+# Main build target - now only compiles modules
+build: $(COMPILED_MODULES)
 
-# Rule to create the final application
-# This depends on the main source and all the compiled modules
-$(APP_PATH): $(MAIN_SOURCE) $(COMPILED_MODULES)
-	@echo "Creating application bundle..."
-	@osacompile -o "$(APP_PATH)" "$(MAIN_SOURCE)"
-	@echo "Copying compiled modules to application..."
-	@mkdir -p "$(APP_PATH)/Contents/Resources"
-	@cp $(COMPILED_MODULES) "$(APP_PATH)/Contents/Resources/"
-	@echo "\nBuild complete."
-	@echo "Run the application from: $(APP_PATH)"
-
-# Rule to compile a single module into the temp directory
+# Rule to compile a single module into the build directory
 $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 	@mkdir -p $(COMPILED_MODULES_DIR)
 	@echo "Compiling module: $<"
 	@osacompile -o "$@" "$<"
+
+# Run all tests
+test: build
+	@set -euo pipefail; \
+	for test_file in $(TEST_FILES); do \
+		echo "\n----- Running $$test_file -----"; \
+		if ! osascript "$$test_file" 2>&1; then \
+			echo "Test $$test_file failed with error"; \
+			exit 1; \
+		fi; \
+		echo "---------------------------------"; \
+	done
 
 # Clean build artifacts
 clean:
@@ -52,9 +50,10 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all     Builds the application (default)"
-	@echo "  build   Builds the application"
+	@echo "  all     Builds all modules (default)"
+	@echo "  build   Builds all modules"
+	@echo "  test    Runs all tests"
 	@echo "  clean   Removes all build artifacts"
 	@echo "  help    Shows this help message"
 
-.PHONY: all build clean help
+.PHONY: all build test clean help
