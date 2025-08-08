@@ -16,13 +16,16 @@ on getIPAddress(overrideIP)
 		return overrideIP
 	end if
 
-	set ip to _getWifiIP()
-
-	if ip is missing value then
-		set ip to _getLocalhostIP()
+	if overrideIP is not missing value and overrideIP is not "" then
+		return overrideIP
 	end if
 
-	return ip
+	set wifiIP to _getWifiIP()
+	if wifiIP is missing value then
+		return _getLocalhostIP()
+	else
+		return wifiIP
+	end if
 end getIPAddress
 
 on isPortInUse(port_number, ip_address)
@@ -45,8 +48,8 @@ on _getWifiIP()
 		else
 			return ip_address
 		end if
-	on error
-		return missing value
+	on error errMsg number errNum
+		return "Error: " & errMsg & " (Error Number: " & errNum & ")"
 	end try
 end _getWifiIP
 
