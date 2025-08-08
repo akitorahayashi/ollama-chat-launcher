@@ -13,19 +13,19 @@ on getIPAddress(overrideIP)
 	-- 3. Localhost
 
 	if overrideIP is not missing value and overrideIP is not "" then
-		return overrideIP
-	end if
+        return overrideIP
+    end if
 
-	if overrideIP is not missing value and overrideIP is not "" then
-		return overrideIP
-	end if
+    if overrideIP is not missing value and overrideIP is not "" then
+        return overrideIP
+    end if
 
-	set wifiIP to _getWifiIP()
-	if wifiIP is missing value then
-		return _getLocalhostIP()
-	else
-		return wifiIP
-	end if
+    set wifiIP to _getWifiIP()
+    if wifiIP is missing value then
+        return _getLocalhostIP()
+    else
+        return wifiIP
+    end if
 end getIPAddress
 
 on isPortInUse(port_number, ip_address)
