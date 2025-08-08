@@ -22,7 +22,7 @@ on createNewWindow(title)
 	end tell
 end createNewWindow
 
-on openNewTabInWindow(target_window, title)
+on openNewTabInWindow(target_window)
 	tell application "Terminal"
 		activate
 		set selected of target_window to true
@@ -31,29 +31,20 @@ on openNewTabInWindow(target_window, title)
 		end tell
 		delay 0.5
 		set new_tab to selected tab of front window
-		set custom title of new_tab to title
 		return new_tab
 	end tell
 end openNewTabInWindow
 
 -- ==========================================
--- Public API - Title Generation
+--  Title Generation
 -- ==========================================
 
 on generateWindowTitle(wifi_ip, sequence_number, ollama_port, model_name)
-	return model_name & " Server #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "]"
+	return (sequence_number as text) & "." & model_name & " Server [" & wifi_ip & ":" & (ollama_port as text) & "]"
 end generateWindowTitle
 
-on generateTabTitle(tab_number, model_name)
-	if tab_number = 1 then
-		return "Server"
-	else
-		return "Chat #" & (tab_number - 1)
-	end if
-end generateTabTitle
-
 -- ==========================================
--- Public API - Window Search
+-- Window Search
 -- ==========================================
 
 on getMaxSequenceNumber(wifi_ip, ollama_port)
@@ -97,7 +88,7 @@ on _findServerWindows(wifi_ip, ollama_port)
 			repeat with w in windows
 				try
 					set window_title to custom title of w
-					if window_title contains "Server #" and window_title contains expected_server_pattern then
+					if window_title contains "Server [" and window_title contains expected_server_pattern then
 						-- シーケンス番号を抽出
 						set seq_num to my _extractSequenceNumber(window_title)
 						if seq_num is not missing value then
@@ -117,26 +108,14 @@ end _findServerWindows
 
 on _extractSequenceNumber(window_title)
 	try
-		-- "Server #" の後の数字を抽出
-		set server_pos to offset of "Server #" in window_title
-		if server_pos > 0 then
-			set after_server to text (server_pos + 8) thru -1 of window_title
-			set space_pos to offset of " " in after_server
-			if space_pos > 0 then
-				set seq_str to text 1 thru (space_pos - 1) of after_server
-			else
-				-- スペースがない場合、最後まで取る
-				set bracket_pos to offset of " [" in after_server
-				if bracket_pos > 0 then
-					set seq_str to text 1 thru (bracket_pos - 1) of after_server
-				else
-					set seq_str to after_server
-				end if
-			end if
+		-- 先頭の数字＋.を抽出
+		set dot_pos to offset of "." in window_title
+		if dot_pos > 1 then
+			set seq_str to text 1 thru (dot_pos - 1) of window_title
 			return seq_str as integer
 		end if
 	on error
-	error "WindowManager: Sequence number parse error in title: " & window_title
+		error "WindowManager: Sequence number parse error in title: " & window_title
 	end try
 	return missing value
 end _extractSequenceNumber

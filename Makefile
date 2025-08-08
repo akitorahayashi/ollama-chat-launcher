@@ -19,7 +19,7 @@ COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 all: build
 
 # Main build target - now only compiles modules
-build: $(COMPILED_MODULES)
+build: clean $(COMPILED_MODULES)
 
 # Rule to compile a single module into the build directory
 $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
