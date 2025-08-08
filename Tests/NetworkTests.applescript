@@ -20,10 +20,9 @@ on error
 end try
 set Network to load script alias module_path
 
--- Test getWifiIP
 -- Test getIPAddress
 try
-    set test_ip to Network's getIPAddress()
+    set test_ip to Network's getIPAddress(missing value)
     -- The function should always return a string (either a found IP or the fallback 127.0.0.1).
     -- A simple validation is to check if the string is not empty and contains dots.
     if test_ip is not "" and test_ip contains "." then
@@ -39,7 +38,7 @@ end try
 try
     -- This test assumes port 80 is in use, which is likely on most systems.
 -- Test with a port that is likely in use (like 80 for http) and just check for a valid boolean response.
-set result to Network's isPortInUse(80)
+set result to Network's isPortInUse(80, "127.0.0.1")
 if result is true or result is false then
 	log "Test isPortInUse (port 80): PASSED - Function returned a valid boolean"
     else
@@ -51,7 +50,7 @@ end try
 
 try
     -- This test assumes a high port number is not in use.
-    if not Network's isPortInUse(65535) then
+    if not Network's isPortInUse(65535, "127.0.0.1") then
         log "Test isPortInUse (port 65535): PASSED"
     else
         log "Test isPortInUse (port 65535): FAILED - Port 65535 is in use"

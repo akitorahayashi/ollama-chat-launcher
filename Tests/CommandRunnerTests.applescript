@@ -13,7 +13,7 @@ set modules_path to project_root & "build:modules:"
 
 -- Load the module to be tested
 try
-	set CommandBuilder to load script file (modules_path & "CommandBuilder.scpt")
+	set CommandRunner to load script file (modules_path & "CommandRunner.scpt")
 on error err_msg
 	log "SETUP ERROR: " & err_msg
 	error "Test setup failed: " & err_msg
@@ -29,7 +29,7 @@ try
 	-- Note: The display part of the command still uses unescaped params, which is correct.
 	-- The executable part uses escaped params.
 	set expected_command to "echo '--- Private LLM Launcher ---'; echo 'IP Address: 192.168.1.10'; echo 'Port: 11434'; echo 'Model: tinyllama'; echo '--------------------------'; echo 'Starting Ollama server...'; OLLAMA_HOST=http://'192.168.1.10':'11434' ollama serve"
-	set actual_command to CommandBuilder's buildServerCommand(test_ip, test_port, test_model)
+	set actual_command to CommandRunner's buildServerCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildServerCommand: PASSED"
@@ -50,7 +50,7 @@ try
 	set test_port to "8080"
 	set test_model to "tinyllama"
 	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'tinyllama'"
-	set actual_command to CommandBuilder's buildModelCommand(test_ip, test_port, test_model)
+	set actual_command to CommandRunner's buildModelCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildModelCommand: PASSED"
@@ -70,7 +70,7 @@ try
 	set test_port to "8080"
 	set test_model to "nonexistent; reboot"
 	set expected_command to "OLLAMA_HOST=http://'127.0.0.1':'8080' ollama run 'nonexistent; reboot'"
-	set actual_command to CommandBuilder's buildModelCommand(test_ip, test_port, test_model)
+	set actual_command to CommandRunner's buildModelCommand(test_ip, test_port, test_model)
 
 	if actual_command = expected_command then
 		log "Test buildModelCommand (malicious input): PASSED"
@@ -84,4 +84,4 @@ on error e
 end try
 
 
-log "CommandBuilder tests complete."
+log "CommandRunner tests complete."
