@@ -29,15 +29,19 @@ $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 
 # Run all tests
 test: build
-	@set -euo pipefail; \
-	for test_file in $(TEST_FILES); do \
-		echo "\n----- Running $$test_file -----"; \
-		if ! osascript "$$test_file" 2>&1; then \
-			echo "Test $$test_file failed with error"; \
-			exit 1; \
-		fi; \
-		echo "---------------------------------"; \
-	done
+	@if [ -z "$(TEST_FILES)" ]; then \
+		echo "No test files found in $(TESTS_DIR)/. Skipping tests."; \
+	else \
+		set -euo pipefail; \
+		for test_file in $(TEST_FILES); do \
+			echo "\n----- Running $$test_file -----"; \
+			if ! osascript "$$test_file" 2>&1; then \
+				echo "Test $$test_file failed with error"; \
+				exit 1; \
+			fi; \
+			echo "---------------------------------"; \
+		done; \
+	fi
 
 # Clean build artifacts
 clean:
