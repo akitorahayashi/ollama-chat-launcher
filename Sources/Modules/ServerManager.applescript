@@ -3,9 +3,9 @@ property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.1
 
 -- Properties for other modules, inherited from the parent script
-on waitForServer(ollama_port, Network)
+on waitForServer(ip_address, ollama_port, Network)
         set elapsed to 0
-        repeat until Network's isPortInUse(ollama_port)
+        repeat until Network's isPortInUse(ollama_port, ip_address)
             delay SERVER_CHECK_INTERVAL
             set elapsed to elapsed + SERVER_CHECK_INTERVAL
             if elapsed > SERVER_STARTUP_TIMEOUT then

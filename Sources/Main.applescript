@@ -19,14 +19,15 @@ end loadModules
 -- ==========================================
 -- Public API
 -- ==========================================
-on runWithConfiguration(modelName, ollamaPort)
+on runWithConfiguration(modelName, ollamaPort, overrideIP)
 	my loadModules()
 	try
-		set ip_address to Network's getIPAddress()
-		if Network's isPortInUse(ollamaPort) then
-			my handleExistingServer(ip_address, modelName, ollamaPort)
+		set ip_to_use to Network's getIPAddress(overrideIP)
+
+		if Network's isPortInUse(ollamaPort, ip_to_use) then
+			my handleExistingServer(ip_to_use, modelName, ollamaPort)
 		else
-			my handleNewServer(ip_address, modelName, ollamaPort)
+			my handleNewServer(ip_to_use, modelName, ollamaPort)
 		end if
 	on error error_message
 		log "Execution Error: An error occurred: " & error_message
@@ -51,7 +52,7 @@ on handleNewServer(ip_address, modelName, ollamaPort)
 	set server_info to ServerManager's startOllamaServer(ip_address, ollamaPort, modelName, WindowManager)
 	set server_window to server_info's window
 	set sequence_number to server_info's sequence
-	if ServerManager's waitForServer(ollamaPort, Network) then
+	if ServerManager's waitForServer(ip_address, ollamaPort, Network) then
 		delay 1 -- Wait for the server to fully start
 		ServerManager's executeOllamaModel(server_window, ip_address, sequence_number, modelName, ollamaPort, WindowManager)
 	else
