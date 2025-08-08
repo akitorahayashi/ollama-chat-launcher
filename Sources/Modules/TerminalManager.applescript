@@ -37,12 +37,8 @@ on setTitleOf(target, title)
 	end try
 end setTitleOf
 
-on generateWindowTitle(wifi_ip, sequence_number, title_type, ollama_port, model_name)
-	if title_type is "server" then
-		return "Ollama Server #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "]"
-	else if title_type is "chat" then
-		return "Ollama Chat #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "] (" & model_name & ")"
-	end if
+on generateWindowTitle(wifi_ip, sequence_number, ollama_port, model_name)
+	return model_name & " Server #" & sequence_number & " [" & wifi_ip & ":" & ollama_port & "]"
 end generateWindowTitle
 
 on getMaxSequenceNumber(wifi_ip, ollama_port)
