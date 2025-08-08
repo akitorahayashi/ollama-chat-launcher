@@ -15,30 +15,16 @@ jobs:
       - name: Test Network Module
         run: make test-Network
 
-  test-ServerManager:
+  test-CommandRunner:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test ServerManager Module
-        run: make test-ServerManager
+      - name: Test CommandRunner Module
+        run: make test-CommandRunner
 
-  test-CommandBuilder:
+  test-WindowManager:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test CommandBuilder Module
-        run: make test-CommandBuilder
-
-  test-TerminalManager:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test TerminalManager Module
-        run: make test-TerminalManager
-
-  test-Main:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test Main Script
-        run: make test-Main
+      - name: Test WindowManager Module
+        run: make test-WindowManager
