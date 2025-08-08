@@ -38,7 +38,7 @@ $(BUILD_DIR)/modules/%.scpt: $(MODULES_DIR)/%.applescript
 
 # Run all tests
 test: build
-	@set -e; \
+	@set -euo pipefail; \
 	for test_file in $(TEST_FILES); do \
 		printf '\n----- Running %s -----\n' "$$test_file"; \
 		osascript "$$test_file"; \
@@ -48,7 +48,7 @@ test: build
 # CI-specific target generator
 define TEST_TEMPLATE
 test-$(1): build
-	@set -e; \
+	@set -euo pipefail; \
 	printf '\n--- Running test for $(1) module... ---\n'; \
 	osascript "$(TESTS_DIR)/$(1)Tests.applescript"
 endef
@@ -56,7 +56,7 @@ endef
 $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
 test-Main: build
-	@set -e; \
+	@set -euo pipefail; \
 	printf '\n--- Running test for Main script... ---\n'; \
 	osascript "Tests/MainTests.applescript"
 
