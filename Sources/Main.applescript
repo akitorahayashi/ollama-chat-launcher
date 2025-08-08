@@ -19,9 +19,9 @@ on loadModules()
 		set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
 		set TerminalManager to load script alias (compiled_modules_folder & "TerminalManager.scpt")
 		set CommandBuilder to load script alias (compiled_modules_folder & "CommandBuilder.scpt")
-		log "全モジュールの読み込みが完了しました"
+		log "All modules loaded successfully."
 	on error error_message
-		log "モジュール読み込みエラー: " & error_message
+		log "Module loading error: " & error_message
 		error "Failed to load required modules: " & error_message
 	end try
 end loadModules

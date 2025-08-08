@@ -1,5 +1,5 @@
 -- CommandBuilder.applescript
--- シェルコマンドの文字列を生成する責務を担うモジュール
+-- This module is responsible for generating shell command strings.
 
 on buildServerCommand(ip_address, port, model_name)
 	-- パラメータをエスケープしてインジェクションを防ぐ

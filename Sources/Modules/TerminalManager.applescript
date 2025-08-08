@@ -1,5 +1,5 @@
 -- TerminalManager.applescript
--- ターミナルのウィンドウ・タブ操作に特化したモジュール
+-- This module specializes in managing Terminal windows and tabs.
 
 on createNewWindowWithCommand(command)
 	tell application "Terminal"
@@ -23,7 +23,12 @@ on openNewTabInWindow(target_window, command)
 end openNewTabInWindow
 
 on setTitleOf(target, title)
-	tell application "Terminal"
-		set custom title of target to title
-	end tell
+	try
+		tell application "Terminal"
+			set custom title of target to title
+		end tell
+	on error error_message
+		log "Error setting title: " & error_message
+		-- This error is not critical, so we log it but don't stop the script.
+	end try
 end setTitleOf
