@@ -5,15 +5,24 @@
 -- Public API - Window and Tab Creation
 -- ==========================================
 
-on createNewWindow()
+on createNewWindow(title)
 	tell application "Terminal"
 		activate
-		do script ""
-		return front window
+		-- Check if there are any windows, if not create one
+		if (count of windows) = 0 then
+			-- Create a new window by opening a new Terminal
+			tell application "System Events"
+				keystroke "n" using command down
+			end tell
+			delay 0.5
+		end if
+		set new_window to front window
+		set custom title of new_window to title
+		return new_window
 	end tell
 end createNewWindow
 
-on openNewTabInWindow(target_window)
+on openNewTabInWindow(target_window, title)
 	tell application "Terminal"
 		activate
 		set selected of target_window to true
@@ -21,15 +30,11 @@ on openNewTabInWindow(target_window)
 			keystroke "t" using command down
 		end tell
 		delay 0.5
-		return selected tab of front window
+		set new_tab to selected tab of front window
+		set custom title of new_tab to title
+		return new_tab
 	end tell
 end openNewTabInWindow
-
-on setTitleOf(target, title)
-	tell application "Terminal"
-		set custom title of target to title
-	end tell
-end setTitleOf
 
 -- ==========================================
 -- Public API - Title Generation
