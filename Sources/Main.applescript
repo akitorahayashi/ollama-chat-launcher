@@ -59,19 +59,21 @@ on runWithConfiguration(modelName, ollamaPort, overrideIP)
 		set ip_to_use to Network's getIPAddress(overrideIP)
 		my validateParameters(ip_to_use, ollamaPort, modelName)
 
-		-- ポートが使われているかチェック
-		if Network's isPortInUse(ollamaPort, ip_to_use) then
-			log "Error: Port " & ollamaPort & " is already in use on " & ip_to_use
-			error "Port " & ollamaPort & " is already in use. Please use a different port or stop the existing process."
-		end if
-
-		-- ポートが使われていない場合、サーバが起動しているかチェック
+		-- まずサーバーが起動しているかチェック
 		set server_info to WindowManager's findLatestServerWindow(ip_to_use, ollamaPort)
 		if server_info's window is not missing value then
 			log "Found existing server window. Creating new chat tab."
 			my executeModelInWindow(server_info's window, ip_to_use, server_info's sequence, modelName, ollamaPort)
 		else
-			log "No existing server found. Starting new server."
+			log "No existing server found. Checking port availability."
+			-- サーバーが見つからない場合、ポートが使われているかチェック
+			if Network's isPortInUse(ollamaPort, ip_to_use) then
+				log "Error: Port " & ollamaPort & " is already in use on " & ip_to_use
+				error "Port " & ollamaPort & " is already in use. Please use a different port or stop the existing process."
+			end if
+			
+			-- ポートが使われていない場合、新しいサーバーを起動
+			log "Port is available. Starting new server."
 			set server_window to my startServer(ip_to_use, modelName, ollamaPort)
 			if server_window is not missing value then
 				set next_seq to (WindowManager's getMaxSequenceNumber(ip_to_use, ollamaPort))
