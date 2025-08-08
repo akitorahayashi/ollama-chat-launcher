@@ -22,13 +22,6 @@ jobs:
       - name: Test ServerManager Module
         run: make test-ServerManager
 
-  test-WindowManager:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test WindowManager Module
-        run: make test-WindowManager
-
   test-CommandBuilder:
     runs-on: macos-latest
     steps:

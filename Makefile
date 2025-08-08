@@ -40,21 +40,21 @@ $(BUILD_DIR)/modules/%.scpt: $(MODULES_DIR)/%.applescript
 test: build
 	@set -euo pipefail; \
 	for test_file in $(TEST_FILES); do \
-		printf '\n----- Running %s -----\n' "$$test_file"; \
+		echo "\n----- Running $$test_file -----"; \
 		if ! osascript "$$test_file" 2>&1; then \
-			printf 'Test %s failed with error\n' "$$test_file"; \
+			echo "Test $$test_file failed with error"; \
 			exit 1; \
 		fi; \
-		printf '---------------------------------\n'; \
+		echo "---------------------------------"; \
 	done
 
 # CI-specific target generator
 define TEST_TEMPLATE
 test-$(1): build
 	@set -euo pipefail; \
-	printf '\n--- Running test for $(1) module... ---\n'; \
+		echo "\n--- Running test for $(1) module... ---"; \
 	if ! osascript "$(TESTS_DIR)/$(1)Tests.applescript" 2>&1; then \
-		printf 'Test failed with error\n'; \
+			echo "Test failed with error"; \
 		exit 1; \
 	fi
 endef
@@ -63,9 +63,9 @@ $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
 test-Main: build
 	@set -euo pipefail; \
-	printf '\n--- Running test for Main script... ---\n'; \
+		echo "\n--- Running test for Main script... ---"; \
 	if ! osascript "Tests/MainTests.applescript" 2>&1; then \
-		printf 'Test failed with error\n'; \
+			echo "Test failed with error"; \
 		exit 1; \
 	fi
 
@@ -78,6 +78,14 @@ help:
 	@printf "  clean\t\tRemove build artifacts\n"
 	@printf "\nCI Targets (Dynamically Generated):\n"
 	@printf "  test-%%  (e.g., test-Network)\tCompile and test a specific module\n"
+	@echo "Usage: make [target]"
+	@echo "Main Targets:"
+	@echo "  all\t\tBuild all modules and main script (default)"
+	@echo "  build\t\tBuild all modules and main script"
+	@echo "  test\t\tRun all unit tests"
+	@echo "  clean\t\tRemove build artifacts"
+	@echo "\nCI Targets (Dynamically Generated):"
+	@echo "  test-%  (e.g., test-Network)\tCompile and test a specific module"
 
 clean:
 	-@rm -rf $(BUILD_DIR)
