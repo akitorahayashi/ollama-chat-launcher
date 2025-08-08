@@ -1,5 +1,19 @@
--- CommandBuilder.applescript
--- This module is responsible for generating shell command strings.
+-- CommandRunner.applescript
+-- This module is responsible for generating shell command strings and executing commands.
+
+-- ==========================================
+-- Command Execution
+-- ==========================================
+
+on executeCommand(target, command)
+	tell application "Terminal"
+		do script command in target
+	end tell
+end executeCommand
+
+-- ==========================================
+-- Command Building
+-- ==========================================
 
 on buildServerCommand(ip_address, port, model_name)
 	-- パラメータをエスケープしてインジェクションを防ぐ
