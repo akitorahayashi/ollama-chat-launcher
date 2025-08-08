@@ -1,4 +1,17 @@
 -- ==========================================
+-- Configuration
+-- ==========================================
+property MODEL_NAME : "tinyllama"
+property OLLAMA_PORT : 55764
+-- Optional: Manually specify the IP address for the server.
+-- If set to 'missing value', the script will automatically use the active
+-- Wi-Fi IP address, or fall back to localhost (127.0.0.1).
+-- This is useful for setups like macOS Internet Sharing (e.g., "192.168.2.1").
+-- Example: property OVERRIDE_IP_ADDRESS : "192.168.2.1"
+property OVERRIDE_IP_ADDRESS : missing value
+
+
+-- ==========================================
 -- Module Loading
 -- ==========================================
 global Network, ServerManager, CommandRunner, WindowManager
@@ -11,7 +24,7 @@ on loadModules()
 		end tell
 		
 		-- ビルドディレクトリ内のコンパイル済みモジュールをロード
-		set compiled_modules_folder to (script_container & "build:modules:")
+		set compiled_modules_folder to (script_container & "modules:")
 
 		-- 全てのモジュールをロードする
 		set Network to load script alias (compiled_modules_folder & "Network.scpt")
@@ -49,42 +62,6 @@ on validateParameters(ip_address, port, model_name)
 		error "Model name cannot be empty"
 	end if
 end validateParameters
-
--- ==========================================
--- Public API
--- ==========================================
-on runWithConfiguration(modelName, ollamaPort, overrideIP)
-	my loadModules()
-	try
-		set ip_to_use to Network's getIPAddress(overrideIP)
-		my validateParameters(ip_to_use, ollamaPort, modelName)
-
-		-- まずサーバーが起動しているかチェック
-		set server_info to WindowManager's findLatestServerWindow(ip_to_use, ollamaPort)
-		if server_info's window is not missing value then
-			log "Found existing server window. Creating new chat tab."
-			my executeModelInWindow(server_info's window, ip_to_use, server_info's sequence, modelName, ollamaPort)
-		else
-			log "No existing server found. Checking port availability."
-			-- サーバーが見つからない場合、ポートが使われているかチェック
-			if Network's isPortInUse(ollamaPort, ip_to_use) then
-				log "Error: Port " & ollamaPort & " is already in use on " & ip_to_use
-				error "Port " & ollamaPort & " is already in use. Please use a different port or stop the existing process."
-			end if
-			
-			-- ポートが使われていない場合、新しいサーバーを起動
-			log "Port is available. Starting new server."
-			set server_window to my startServer(ip_to_use, modelName, ollamaPort)
-			if server_window is not missing value then
-				set next_seq to (WindowManager's getMaxSequenceNumber(ip_to_use, ollamaPort))
-				my executeModelInWindow(server_window, ip_to_use, next_seq, modelName, ollamaPort)
-			end if
-		end if
-	on error error_message
-		log "Execution Error: " & error_message
-		error error_message
-	end try
-end runWithConfiguration
 
 -- ==========================================
 -- Internal Flow Control
@@ -128,3 +105,38 @@ on executeModelInWindow(target_window, ip_address, sequence_number, model_name, 
 	-- 4. CommandRunnerでコマンドを実行
 	CommandRunner's executeCommand(new_tab, model_command)
 end executeModelInWindow
+
+-- ==========================================
+-- Main Execution Block
+-- ==========================================
+try
+	my loadModules()
+
+	set ip_to_use to Network's getIPAddress(OVERRIDE_IP_ADDRESS)
+	my validateParameters(ip_to_use, OLLAMA_PORT, MODEL_NAME)
+
+	-- まずサーバーが起動しているかチェック
+	set server_info to WindowManager's findLatestServerWindow(ip_to_use, OLLAMA_PORT)
+	if server_info's window is not missing value then
+		log "Found existing server window. Creating new chat tab."
+		my executeModelInWindow(server_info's window, ip_to_use, server_info's sequence, MODEL_NAME, OLLAMA_PORT)
+	else
+		log "No existing server found. Checking port availability."
+		-- サーバーが見つからない場合、ポートが使われているかチェック
+		if Network's isPortInUse(OLLAMA_PORT, ip_to_use) then
+			log "Error: Port " & OLLAMA_PORT & " is already in use on " & ip_to_use
+			error "Port " & OLLAMA_PORT & " is already in use. Please use a different port or stop the existing process."
+		end if
+
+		-- ポートが使われていない場合、新しいサーバーを起動
+		log "Port is available. Starting new server."
+		set server_window to my startServer(ip_to_use, MODEL_NAME, OLLAMA_PORT)
+		if server_window is not missing value then
+			set next_seq to (WindowManager's getMaxSequenceNumber(ip_to_use, OLLAMA_PORT))
+			my executeModelInWindow(server_window, ip_to_use, next_seq, MODEL_NAME, OLLAMA_PORT)
+		end if
+	end if
+on error error_message
+	log "Execution Error: " & error_message
+	error error_message
+end try
