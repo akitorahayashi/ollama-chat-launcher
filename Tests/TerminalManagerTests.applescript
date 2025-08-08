@@ -19,11 +19,37 @@ on error err_msg
 	return
 end try
 
+-- Helper to wait for a condition to become true, to avoid flaky tests with fixed delays
+on wait_for_condition(condition_script, timeout_seconds)
+	set end_time to (current date) + timeout_seconds
+	repeat while (current date) < end_time
+		try
+			if (run script condition_script) then return true
+		end try
+		delay 0.2
+	end repeat
+	return false
+end wait_for_condition
+
+-- Robust cleanup handler for Terminal windows
+on cleanup_window(target_window)
+	try
+		tell application "Terminal"
+			if target_window exists then
+				close target_window
+			end if
+		end tell
+	on error e
+		log "Ignoring error during window cleanup: " & e
+	end try
+end cleanup_window
+
 
 log "MANUAL TEST: The following tests for TerminalManager require manual observation."
 log "MANUAL TEST: They will open new Terminal windows and tabs, and set their titles."
 
 -- Test createNewWindowWithCommand
+set new_window to missing value
 try
 	log "Testing createNewWindowWithCommand..."
 	tell application "Terminal"
@@ -31,37 +57,35 @@ try
 	end tell
 
 	set new_window to TerminalManager's createNewWindowWithCommand("echo 'Hello from createNewWindowWithCommand test'")
-	delay 1 -- Give time for the window to appear
+
+	-- Wait for the new window to appear
+	set condition to "tell application \"Terminal\" to return (count of windows) > " & window_count_before
+	if not my wait_for_condition(condition, 5) then
+		error "Window did not appear within the timeout."
+	end if
 
 	tell application "Terminal"
-		set window_count_after to count of windows
-		if window_count_after > window_count_before then
-			log "Test createNewWindowWithCommand: PASSED"
-		else
-			log "Test createNewWindowWithCommand: FAILED - Window count did not increase"
-		end if
+		log "Test createNewWindowWithCommand: PASSED"
 
 		-- Test setTitleOf on the new window
 		log "Testing setTitleOf for a window..."
 		TerminalManager's setTitleOf(new_window, "Test Window Title")
-		delay 0.5
+		delay 0.5 -- A short delay for title to apply is acceptable
 		if custom title of new_window is "Test Window Title" then
 			log "Test setTitleOf (window): PASSED"
 		else
 			log "Test setTitleOf (window): FAILED"
 		end if
-
-		-- Clean up the created window
-		if new_window is not missing value then
-			close new_window
-		end if
 	end tell
 on error e
 	log "Test createNewWindowWithCommand or setTitleOf (window): FAILED with error: " & e
+finally
+	my cleanup_window(new_window)
 end try
 
 
 -- Test openNewTabInWindow and setTitleOf for tabs
+set parent_window to missing value
 try
 	log "Testing openNewTabInWindow..."
 	-- Create a new window to work in
@@ -69,39 +93,34 @@ try
 		activate
 		set parent_window to do script ""
 		set tabs_before to count of tabs of parent_window
+		set parent_id to id of parent_window
 	end tell
-	delay 1
 
 	set new_tab to TerminalManager's openNewTabInWindow(parent_window, "echo 'Hello from openNewTabInWindow test'")
-	delay 1
+
+	-- Wait for the new tab to appear
+	set condition to "tell application \"Terminal\" to return (count of tabs of window id " & parent_id & ") > " & tabs_before
+	if not my wait_for_condition(condition, 5) then
+		error "Tab did not appear within the timeout."
+	end if
 
 	tell application "Terminal"
-		set tabs_after to count of tabs of parent_window
-		if tabs_after > tabs_before then
-			log "Test openNewTerminalTab: PASSED"
-		else
-			log "Test openNewTerminalTab: FAILED - Tab count did not increase"
-		end if
+		log "Test openNewTerminalTab: PASSED"
 
 		-- Test setTitleOf on the new tab
 		log "Testing setTitleOf for a tab..."
 		TerminalManager's setTitleOf(new_tab, "Test Tab Title")
-		delay 0.5
+		delay 0.5 -- A short delay for title to apply is acceptable
 		if custom title of new_tab is "Test Tab Title" then
 			log "Test setTitleOf (tab): PASSED"
 		else
 			log "Test setTitleOf (tab): FAILED"
 		end if
-
-		-- Clean up the created window
-		close parent_window
 	end tell
 on error e
-	-- Ensure cleanup even on error
-	try
-		tell application "Terminal" to close parent_window
-	end try
-	log "Test openNewTerminalTab or setTitleOf (tab): FAILED with error: " & e
+	log "Test openNewTabInWindow or setTitleOf (tab): FAILED with error: " & e
+finally
+	my cleanup_window(parent_window)
 end try
 
 log "TerminalManager tests complete."
