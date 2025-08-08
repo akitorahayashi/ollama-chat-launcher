@@ -13,7 +13,6 @@ This project provides a modular AppleScript framework for automatically starting
 
 - macOS with AppleScript support.
 - Ollama installed and accessible via your `PATH` environment variable.
-  - Install guide: https://ollama.com/download
 
 ## How to Use
 
