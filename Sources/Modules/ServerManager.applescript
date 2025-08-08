@@ -19,8 +19,8 @@ on isOllamaServerRunning(ip_address, port)
 	end try
 end isOllamaServerRunning
 
-on startServer(ip_address, port, model_name, CommandBuilder, WindowManager)
-	set server_command to CommandBuilder's buildServerCommand(ip_address, port, model_name)
+on startServer(ip_address, port, model_name, ollama_models_path, CommandBuilder, WindowManager)
+	set server_command to CommandBuilder's buildServerCommand(ip_address, port, model_name, ollama_models_path)
 	set next_seq to (WindowManager's getMaxSequenceNumber(ip_address, port) + 1)
 	set server_title to WindowManager's generateWindowTitle(ip_address, next_seq, port, model_name)
 	set new_server_window to WindowManager's createNewWindow(server_title)

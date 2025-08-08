@@ -2,19 +2,21 @@
 -- This module is responsible for building shell command strings only.
 -- It does NOT execute commands - that is the responsibility of the caller.
 
-on buildServerCommand(ip_address, port, model_name)
+on buildServerCommand(ip_address, port, model_name, ollama_models_path)
 	set escaped_ip to my escapeShellParameter(ip_address)
 	set escaped_port to my escapeShellParameter(port)
 	set escaped_model_name to my escapeShellParameter(model_name)
+	set escaped_models_path to my escapeShellParameter(ollama_models_path)
 
 	set display_command to "echo '--- Private LLM Launcher ---'; " & ¬
 		"echo 'IP Address: " & ip_address & "'; " & ¬
 		"echo 'Port: " & port & "'; " & ¬
 		"echo Model: " & escaped_model_name & "; " & ¬
+		"echo Models Path: " & escaped_models_path & "; " & ¬
 		"echo '--------------------------'; " & ¬
 		"echo 'Starting Ollama server...';"
 
-	set server_command to "OLLAMA_HOST=http://" & escaped_ip & ":" & escaped_port & " ollama serve"
+	set server_command to "OLLAMA_MODELS=" & escaped_models_path & " OLLAMA_HOST=http://" & escaped_ip & ":" & escaped_port & " ollama serve"
 	return display_command & " " & server_command
 end buildServerCommand
 

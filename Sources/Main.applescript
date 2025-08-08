@@ -5,6 +5,8 @@ property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55765  
 -- Optional: Manually specify the server's IP address. If not set, the Wi-Fi IP is used, falling back to localhost if Wi-Fi is off.
 property OVERRIDE_IP_ADDRESS : missing value
+-- Optional: Specify a custom path for Ollama models.
+property OLLAMA_MODELS_PATH : "~/.ollama/models"
 
 
 -- ==========================================
@@ -71,6 +73,9 @@ try
 	set ip_to_use to Network's getIPAddress(OVERRIDE_IP_ADDRESS)
 	my validateParameters(ip_to_use, OLLAMA_PORT, MODEL_NAME)
 
+	-- Expand the tilde (~) in the models path to a full path.
+	set expanded_models_path to do shell script "eval echo " & quoted form of OLLAMA_MODELS_PATH
+
 	-- Check if the Ollama server is actually running on the specified IP and port
 	if ServerManager's isOllamaServerRunning(ip_to_use, OLLAMA_PORT) then
 		log "Ollama server is already running on " & ip_to_use & ":" & OLLAMA_PORT & ". Looking for existing window."
@@ -82,7 +87,7 @@ try
 		else
 			log "Server is running but no corresponding window found. Creating new window and chat tab."
 			-- If the server is running but there is no window, start only the chat in a new window
-			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, expanded_models_path, CommandBuilder, WindowManager)
 			delay 1
 			ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
 		end if
@@ -94,7 +99,7 @@ try
 		else
 			log "Port is available. Starting new server."
 			-- If the port is not in use, start the server in a new window
-			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, expanded_models_path, CommandBuilder, WindowManager)
 			if ServerManager's waitForServer(ip_to_use, OLLAMA_PORT, Network) then
 				delay 1
 				log "Server started successfully."

@@ -28,6 +28,8 @@ property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55765
 -- Optional: Manually specify the server's IP address.
 property OVERRIDE_IP_ADDRESS : missing value
+-- Optional: Specify a custom path for Ollama models.
+property OLLAMA_MODELS_PATH : "~/.ollama/models"
 ```
 
 ### 2. Build the Modules
@@ -64,11 +66,3 @@ The script is designed to look for modules in this location when it's run as a s
 ### Module Loading
 
 When you run `Main.applescript` from the Script Editor, it **always** loads the compiled (`.scpt`) modules from the `build/modules/` directory. It does **not** load the raw `.applescript` source files. Therefore, you must run `make build` after any changes to the modules for them to take effect.
-
-### Testing
-
-A test runner is included but there are currently no test files.
-
-```bash
-make test
-```
