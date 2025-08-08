@@ -59,9 +59,6 @@ on validateParameters(ip_address, port, model_name)
 end validateParameters
 
 -- ==========================================
--- Internal Flow Control
--- ==========================================
--- ==========================================
 -- Main Execution Block
 -- ==========================================
 try
@@ -74,29 +71,38 @@ try
 	set ip_to_use to Network's getIPAddress(OVERRIDE_IP_ADDRESS)
 	my validateParameters(ip_to_use, OLLAMA_PORT, MODEL_NAME)
 
-	-- まずサーバーが起動しているかチェック
-	set server_info to WindowManager's findLatestServerWindow(ip_to_use, OLLAMA_PORT)
-	if server_info's window is not missing value then
-		log "Found existing server window. Creating new chat tab."
-		ServerManager's executeModelInWindow(server_info's window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
-	else
-		log "No existing server found. Checking port availability."
-		-- サーバーが見つからない場合、ポートが使われているかチェック
-		if Network's isPortInUse(OLLAMA_PORT, ip_to_use) then
-			log "Error: Port " & OLLAMA_PORT & " is already in use on " & ip_to_use
-			error "Port " & OLLAMA_PORT & " is already in use. Please use a different port or stop the existing process."
-		end if
-
-		-- ポートが使われていない場合、新しいサーバーを起動
-		log "Port is available. Starting new server."
-		set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
-		if ServerManager's waitForServer(ip_to_use, OLLAMA_PORT, Network) then
-			delay 1
-			log "Server started successfully."
-			set next_seq to (WindowManager's getMaxSequenceNumber(ip_to_use, OLLAMA_PORT))
-			ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+	-- 指定されたIP・ポートでOllamaサーバーが実際に起動しているかチェック
+	if ServerManager's isOllamaServerRunning(ip_to_use, OLLAMA_PORT) then
+		log "Ollama server is already running on " & ip_to_use & ":" & OLLAMA_PORT & ". Looking for existing window."
+		-- サーバーが動いている場合のみ、対応するウィンドウを探す
+		set server_info to WindowManager's findLatestServerWindow(ip_to_use, OLLAMA_PORT)
+		if server_info's window is not missing value then
+			log "Found existing server window. Creating new chat tab."
+			ServerManager's executeModelInWindow(server_info's window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
 		else
-			log "Startup Failed: Failed to start the server."
+			log "Server is running but no corresponding window found. Creating new window and chat tab."
+			-- サーバーは動いているがウィンドウがない場合、新しいウィンドウでチャットのみ開始
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			delay 1
+			ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+		end if
+	else
+		log "No Ollama server running on " & ip_to_use & ":" & OLLAMA_PORT & ". Checking if port is available."
+		-- サーバーが動いていない場合、ポートが使用中かチェック
+		if Network's isPortInUse(OLLAMA_PORT, ip_to_use) then
+			error "Port " & OLLAMA_PORT & " is already in use by another process. Cannot start new server."
+		else
+			log "Port is available. Starting new server."
+			-- ポートが使用されていない場合、新しいウィンドウでサーバーを起動
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			if ServerManager's waitForServer(ip_to_use, OLLAMA_PORT, Network) then
+				delay 1
+				log "Server started successfully."
+				-- サーバー起動後、同じウィンドウに新しいタブでモデルチャットを開始
+				ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			else
+				log "Startup Failed: Failed to start the server."
+			end if
 		end if
 	end if
 on error error_message

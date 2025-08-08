@@ -4,9 +4,6 @@
 property SERVER_STARTUP_TIMEOUT : 30
 property SERVER_CHECK_INTERVAL : 0.5
 
--- ==========================================
--- Command Execution API
--- ==========================================
 on startServer(ip_address, port, model_name, CommandBuilder, WindowManager)
 	-- 1. コマンドを生成
 	set server_command to CommandBuilder's buildServerCommand(ip_address, port, model_name)
@@ -41,9 +38,18 @@ on executeModelInWindow(target_window, ip_address, port, model_name, CommandBuil
 	return new_tab
 end executeModelInWindow
 
--- ==========================================
--- Server Status API
--- ==========================================
+on isOllamaServerRunning(ip_address, port)
+	-- Ollama APIエンドポイントにリクエストを送って、実際にOllamaサーバーが動いているかチェック
+	try
+		set api_url to "http://" & ip_address & ":" & port & "/api/tags"
+		set curl_command to "curl -s --connect-timeout 3 --max-time 5 " & api_url & " 2>/dev/null"
+		set api_response to do shell script curl_command
+		-- レスポンスが空でなく、JSONのような形式であればOllamaサーバーが動いている
+		return (api_response is not "" and api_response contains "{")
+	on error
+		return false
+	end try
+end isOllamaServerRunning
 
 on waitForServer(ip_address, ollama_port, Network)
 	set elapsed to 0

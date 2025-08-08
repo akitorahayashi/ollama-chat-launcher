@@ -8,14 +8,11 @@
 on createNewWindow(title)
 	tell application "Terminal"
 		activate
-		-- Check if there are any windows, if not create one
-		if (count of windows) = 0 then
-			-- Create a new window by opening a new Terminal
-			tell application "System Events"
-				keystroke "n" using command down
-			end tell
-			delay 0.5
-		end if
+		-- Always create a new window, regardless of existing windows
+		tell application "System Events"
+			keystroke "n" using command down
+		end tell
+		delay 0.5
 		set new_window to front window
 		set custom title of new_window to title
 		return new_window
@@ -35,17 +32,9 @@ on openNewTabInWindow(target_window)
 	end tell
 end openNewTabInWindow
 
--- ==========================================
---  Title Generation
--- ==========================================
-
 on generateWindowTitle(wifi_ip, sequence_number, ollama_port, model_name)
 	return (sequence_number as text) & "." & model_name & " Server [" & wifi_ip & ":" & (ollama_port as text) & "]"
 end generateWindowTitle
-
--- ==========================================
--- Window Search
--- ==========================================
 
 on getMaxSequenceNumber(wifi_ip, ollama_port)
 	set max_seq to 0
@@ -64,6 +53,8 @@ on findLatestServerWindow(wifi_ip, ollama_port)
 	set latest_sequence to missing value
 
 	set server_windows to my _findServerWindows(wifi_ip, ollama_port)
+	
+	log "WindowManager: Found " & (count of server_windows) & " server windows for " & wifi_ip & ":" & ollama_port
 
 	repeat with server_info in server_windows
 		if server_info's sequence > max_seq then
@@ -72,6 +63,12 @@ on findLatestServerWindow(wifi_ip, ollama_port)
 			set latest_sequence to server_info's sequence
 		end if
 	end repeat
+	
+	if latest_sequence is not missing value then
+		log "WindowManager: Latest server window found with sequence: " & latest_sequence & " (highest sequence number = newest server)"
+	else
+		log "WindowManager: No server windows found"
+	end if
 
 	return {window:latest_window, sequence:latest_sequence}
 end findLatestServerWindow
@@ -93,9 +90,10 @@ on _findServerWindows(wifi_ip, ollama_port)
 						set seq_num to my _extractSequenceNumber(window_title)
 						if seq_num is not missing value then
 							copy {sequence:seq_num, window:w} to end of server_windows
+							log "WindowManager: Found server window (seq " & seq_num & "): " & window_title
 						end if
 					end if
-				on error
+				on error window_error
 					-- Skip this window if title cannot be read
 				end try
 			end repeat
@@ -112,10 +110,14 @@ on _extractSequenceNumber(window_title)
 		set dot_pos to offset of "." in window_title
 		if dot_pos > 1 then
 			set seq_str to text 1 thru (dot_pos - 1) of window_title
-			return seq_str as integer
+			set seq_num to seq_str as integer
+			log "WindowManager: Extracted sequence number " & seq_num & " from title: " & window_title
+			return seq_num
+		else
+			log "WindowManager: No dot found in title: " & window_title
 		end if
-	on error
-		error "WindowManager: Sequence number parse error in title: " & window_title
+	on error error_msg
+		log "WindowManager: Sequence number parse error in title '" & window_title & "': " & error_msg
 	end try
 	return missing value
 end _extractSequenceNumber
