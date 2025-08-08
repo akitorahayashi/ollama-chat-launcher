@@ -55,16 +55,11 @@ endef
 
 $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
-run: build
-	@echo "Running main script..."
-	@osascript Tinyllama.applescript
-
 help:
 	@printf "Usage: make [target]\n\n"
 	@printf "Main Targets:\n"
 	@printf "  all\t\tBuild all modules and main script (default)\n"
 	@printf "  build\t\tBuild all modules and main script\n"
-	@printf "  run\t\tRun the main application\n"
 	@printf "  test\t\tRun all unit tests\n"
 	@printf "  clean\t\tRemove build artifacts\n"
 	@printf "\nCI Targets (Dynamically Generated):\n"
@@ -73,6 +68,6 @@ help:
 clean:
 	-@rm -rf $(BUILD_DIR)
 
-.PHONY: all build test clean run help
+.PHONY: all build test clean help
 # Add dynamic test targets to .PHONY
 .PHONY: $(patsubst %,test-%,$(MODULE_NAMES))
