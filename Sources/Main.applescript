@@ -1,29 +1,37 @@
 -- ==========================================
+-- Configuration
+-- ==========================================
+property MODEL_NAME : "tinyllama"
+property OLLAMA_PORT : 55765  
+-- Optional: Manually specify the server's IP address. If not set, the Wi-Fi IP is used, falling back to localhost if Wi-Fi is off.
+property OVERRIDE_IP_ADDRESS : missing value
+
+
+-- ==========================================
 -- Module Loading
 -- ==========================================
-global Network, ServerManager, CommandRunner, WindowManager
+global Network, ServerManager, CommandBuilder, WindowManager
 
-on loadModules()
+on loadModule(moduleName)
 	try
-		set script_path to path to me
-		tell application "Finder"
-			set script_container to container of script_path as text
-		end tell
-		
-		-- ビルドディレクトリ内のコンパイル済みモジュールをロード
-		set compiled_modules_folder to (script_container & "build:modules:")
-
-		-- 全てのモジュールをロードする
-		set Network to load script alias (compiled_modules_folder & "Network.scpt")
-		set ServerManager to load script alias (compiled_modules_folder & "ServerManager.scpt")
-		set CommandRunner to load script alias (compiled_modules_folder & "CommandRunner.scpt")
-		set WindowManager to load script alias (compiled_modules_folder & "WindowManager.scpt")
-		log "All modules loaded successfully."
-	on error error_message
-		log "Module loading error: " & error_message
-		error "Failed to load required modules: " & error_message
+		-- Appとして実行中: Resources/Modules/moduleName.scpt を読み込む
+		set modulePath to (path to resource (moduleName & ".scpt") in directory "Modules") as alias
+		return load script file modulePath
+	on error errMsg number errNum
+		-- Script Editor等で実行中: build/modules/moduleName.scpt を読み込む
+		try
+			tell application "Finder"
+				set scriptFolder to container of (path to me) as text
+				set projectRoot to container of (scriptFolder as alias) as text
+			end tell
+			set modulePath to projectRoot & "build:modules:" & moduleName & ".scpt"
+			set moduleAlias to alias modulePath
+			return load script file moduleAlias
+		on error innerErrMsg number innerErrNum
+			error "Failed to load module " & moduleName & ": " & innerErrMsg number innerErrNum
+		end try
 	end try
-end loadModules
+end loadModule
 
 -- ==========================================
 -- Parameter Validation
@@ -51,80 +59,53 @@ on validateParameters(ip_address, port, model_name)
 end validateParameters
 
 -- ==========================================
--- Public API
+-- Main Execution Block
 -- ==========================================
-on runWithConfiguration(modelName, ollamaPort, overrideIP)
-	my loadModules()
-	try
-		set ip_to_use to Network's getIPAddress(overrideIP)
-		my validateParameters(ip_to_use, ollamaPort, modelName)
+try
+	-- Load all modules
+	set Network to my loadModule("Network")
+	set ServerManager to my loadModule("ServerManager")
+	set CommandBuilder to my loadModule("CommandBuilder")
+	set WindowManager to my loadModule("WindowManager")
 
-		-- まずサーバーが起動しているかチェック
-		set server_info to WindowManager's findLatestServerWindow(ip_to_use, ollamaPort)
+	set ip_to_use to Network's getIPAddress(OVERRIDE_IP_ADDRESS)
+	my validateParameters(ip_to_use, OLLAMA_PORT, MODEL_NAME)
+
+	-- 指定されたIP・ポートでOllamaサーバーが実際に起動しているかチェック
+	if ServerManager's isOllamaServerRunning(ip_to_use, OLLAMA_PORT) then
+		log "Ollama server is already running on " & ip_to_use & ":" & OLLAMA_PORT & ". Looking for existing window."
+		-- サーバーが動いている場合のみ、対応するウィンドウを探す
+		set server_info to WindowManager's findLatestServerWindow(ip_to_use, OLLAMA_PORT)
 		if server_info's window is not missing value then
 			log "Found existing server window. Creating new chat tab."
-			my executeModelInWindow(server_info's window, ip_to_use, server_info's sequence, modelName, ollamaPort)
+			ServerManager's executeModelInWindow(server_info's window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
 		else
-			log "No existing server found. Checking port availability."
-			-- サーバーが見つからない場合、ポートが使われているかチェック
-			if Network's isPortInUse(ollamaPort, ip_to_use) then
-				log "Error: Port " & ollamaPort & " is already in use on " & ip_to_use
-				error "Port " & ollamaPort & " is already in use. Please use a different port or stop the existing process."
-			end if
-			
-			-- ポートが使われていない場合、新しいサーバーを起動
+			log "Server is running but no corresponding window found. Creating new window and chat tab."
+			-- サーバーは動いているがウィンドウがない場合、新しいウィンドウでチャットのみ開始
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			delay 1
+			ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+		end if
+	else
+		log "No Ollama server running on " & ip_to_use & ":" & OLLAMA_PORT & ". Checking if port is available."
+		-- サーバーが動いていない場合、ポートが使用中かチェック
+		if Network's isPortInUse(OLLAMA_PORT, ip_to_use) then
+			error "Port " & OLLAMA_PORT & " is already in use by another process. Cannot start new server."
+		else
 			log "Port is available. Starting new server."
-			set server_window to my startServer(ip_to_use, modelName, ollamaPort)
-			if server_window is not missing value then
-				set next_seq to (WindowManager's getMaxSequenceNumber(ip_to_use, ollamaPort))
-				my executeModelInWindow(server_window, ip_to_use, next_seq, modelName, ollamaPort)
+			-- ポートが使用されていない場合、新しいウィンドウでサーバーを起動
+			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			if ServerManager's waitForServer(ip_to_use, OLLAMA_PORT, Network) then
+				delay 1
+				log "Server started successfully."
+				-- サーバー起動後、同じウィンドウに新しいタブでモデルチャットを開始
+				ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			else
+				log "Startup Failed: Failed to start the server."
 			end if
 		end if
-	on error error_message
-		log "Execution Error: " & error_message
-		error error_message
-	end try
-end runWithConfiguration
-
--- ==========================================
--- Internal Flow Control
--- ==========================================
-on startServer(ip_address, modelName, ollamaPort)
-	-- 1. 各モジュールに問い合わせ、必要な情報を収集・生成
-	set next_seq to (WindowManager's getMaxSequenceNumber(ip_address, ollamaPort) + 1)
-	set server_command to CommandRunner's buildServerCommand(ip_address, ollamaPort, modelName)
-	set server_title to WindowManager's generateWindowTitle(ip_address, next_seq, ollamaPort, modelName)
-
-	-- 2. WindowManagerでウィンドウを作成し、タイトルを設定
-	set new_server_window to WindowManager's createNewWindow(server_title)
-	
-	-- 3. CommandRunnerでコマンドを実行
-	CommandRunner's executeCommand(new_server_window, server_command)
-
-	-- 4. ServerManagerに指示を出し、サーバーの起動を待つ
-	if ServerManager's waitForServer(ip_address, ollamaPort, Network) then
-		delay 1
-		log "Server started successfully."
-		return new_server_window
-	else
-		log "Startup Failed: Failed to start the server."
-		return missing value
 	end if
-end startServer
-
-on executeModelInWindow(target_window, ip_address, sequence_number, model_name, ollama_port)
-	-- 1. コマンドを生成
-	set model_command to CommandRunner's buildModelCommand(ip_address, ollama_port, model_name)
-	
-	-- 2. タブ番号を取得してタイトルを生成
-	tell application "Terminal"
-		set tab_count to count of tabs of target_window
-	end tell
-	set tab_title to WindowManager's generateTabTitle(tab_count + 1, model_name)
-	
-	-- 3. WindowManagerで新しいタブを作成
-	set new_tab to WindowManager's openNewTabInWindow(target_window, tab_title)
-	
-	-- 4. CommandRunnerでコマンドを実行
-	CommandRunner's executeCommand(new_tab, model_command)
-end executeModelInWindow
+on error error_message
+	log "Execution Error: " & error_message
+	error error_message
+end try

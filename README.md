@@ -1,53 +1,39 @@
 ## Overview
 
-This project provides a modular AppleScript framework for automatically starting and managing an Ollama server and interacting with different models.
+This project provides a modular AppleScript framework for automatically starting and managing an Ollama server and interacting with different language models directly from your terminal.
 
-The project is structured to separate the core logic from the specific configurations (like which model to run and on which port), allowing for easy customization and extension.
+The main script (`Sources/Main.applescript`) is designed to be run from the Script Editor during development. It can also be manually saved as a standalone `.app` from the Script Editor.
 
 ## Project Structure
 
-- `Sources/`: Contains the core logic.
-  - `Main.applescript`: A library script containing the main application logic. It does not run on its own.
+- `Sources/`: Contains all the AppleScript source code.
+  - `Main.applescript`: The main entry point and logic for the application. All configuration is handled within this file.
   - `Modules/`: Contains helper modules for tasks like networking and window management.
-- `Tests/`: Contains unit and integration tests for the modules and the main application flow.
-- `Tinyllama.applescript`: An example entry point script. This is what you run to start the application. It defines the configuration and calls the main library.
-- `Makefile`: Provides convenient commands for building, running, and testing the project.
+- `Makefile`: Provides convenient commands for compiling modules and running tests.
 
 ## Prerequisites
 
 - macOS with AppleScript support.
 - Ollama installed.
 
-## Usage
+## Development Workflow
 
-This project uses a `Makefile` to simplify common tasks.
+### 1. Compile Modules
 
-### Build the Project
-
-This command compiles all the necessary AppleScript modules and the main library into the `build/` directory. You must run this before executing any entry point scripts.
+The `Makefile` is used to compile the source modules in `Sources/Modules/` into script objects (`.scpt`) in the `build/modules/` directory. The test scripts depend on these compiled modules.
 
 ```bash
 make build
 ```
+This command only compiles the modules, it does not create an application.
 
-### Running the Application
+### 2. Running the Main Script
 
-After building the project, you can run any of the model-specific entry point scripts. These scripts, like `Tinyllama.applescript`, define which model to run and on which port.
+The main script (`Sources/Main.applescript`) can be run directly from the Apple Script Editor. When run this way, it will load the raw `.applescript` module files from the `Sources/Modules` directory, allowing for rapid development and testing without needing to recompile each time.
 
-There are two primary ways to run an entry point script:
+### 3. Running Tests
 
-1.  **Using the command line:**
-    Open your terminal, navigate to the project directory, and use `osascript`:
-    ```bash
-    osascript Tinyllama.applescript
-    ```
-
-2.  **Using Script Editor:**
-    Open the entry point script (e.g., `Tinyllama.applescript`) in the Script Editor application and click the "Run" button.
-
-### Run Tests
-
-This command runs all the tests located in the `Tests/` directory.
+The test suite can be run via the `Makefile`. This will first compile the modules and then execute the test scripts.
 
 ```bash
 make test
@@ -55,19 +41,9 @@ make test
 
 ## Configuration
 
-To customize the application, you can create and edit entry point scripts like `Tinyllama.applescript`. This file serves as the main configuration file for a specific model.
+All configuration is handled directly within the `Sources/Main.applescript` file. To change the default model, port, or IP address, open this file and edit the properties at the top.
 
-To create a new configuration for a different model, simply copy the `Tinyllama.applescript` file. For example, to create a configuration for a Gemma model, you could run the following command in your terminal:
-
-```bash
-cp Tinyllama.applescript Gemma.applescript
-```
-
-Then, open the new `Gemma.applescript` file and edit the configuration properties (`MODEL_NAME`, `OLLAMA_PORT`, `OVERRIDE_IP_ADDRESS`) at the top to match your needs.
-
-### Example Configuration (`Tinyllama.applescript`)
-
-The entry point script contains all the necessary configuration properties. Below is the full content of `Tinyllama.applescript`, which you can use as a template.
+### Example Configuration (`Sources/Main.applescript`)
 
 ```applescript
 -- ==========================================
@@ -75,26 +51,12 @@ The entry point script contains all the necessary configuration properties. Belo
 -- ==========================================
 property MODEL_NAME : "tinyllama"
 property OLLAMA_PORT : 55764
--- Optional: Manually specify the IP address for the server.
--- If set to 'missing value', the script will automatically use the active
--- Wi-Fi IP address, or fall back to localhost (127.0.0.1).
--- This is useful for setups like macOS Internet Sharing (e.g., "192.168.2.1").
--- Example: property OVERRIDE_IP_ADDRESS : "192.168.2.1"
+-- Optional: Manually specify the server's IP address. If not set, the Wi-Fi IP is used, falling back to localhost if Wi-Fi is off.
 property OVERRIDE_IP_ADDRESS : missing value
-
--- ==========================================
--- Main Logic
--- ==========================================
-try
-    tell application "Finder"
-        set project_folder to (container of (path to me)) as text
-    end tell
-    set main_lib_path to (project_folder & "build:Main.scpt")
-
-    set MainLib to load script alias main_lib_path
-    MainLib's runWithConfiguration(MODEL_NAME, OLLAMA_PORT, OVERRIDE_IP_ADDRESS)
-
-on error err
-    log "Error in Tinyllama entry point: " & err
-end try
 ```
+
+## Creating a Standalone Application
+
+You can create a standalone `.app` from the main script by opening `Sources/Main.applescript` in Script Editor and choosing `File > Export...`. Set the `File Format` to `Application`.
+
+The script includes logic to detect if it's running as an application. If so, it will attempt to load the compiled (`.scpt`) modules from its own `Contents/Resources` directory. For this to work, you must manually copy the compiled modules from `build/modules/` into your exported app's `Contents/Resources/` folder after exporting.

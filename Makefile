@@ -4,36 +4,27 @@ MODULES_DIR = $(SOURCES_DIR)/Modules
 TESTS_DIR   = Tests
 BUILD_DIR   = build
 
-# Main script
-MAIN_SOURCE = $(SOURCES_DIR)/Main.applescript
-MAIN_COMPILED = $(BUILD_DIR)/Main.scpt
+# Directory for compiled modules
+COMPILED_MODULES_DIR = $(BUILD_DIR)/modules
 
-# Dynamically get module names from the filesystem
-MODULE_SOURCES := $(wildcard $(MODULES_DIR)/*.applescript)
+# Source files
+MODULE_SOURCES = $(wildcard $(MODULES_DIR)/*.applescript)
 MODULE_NAMES   := $(basename $(notdir $(MODULE_SOURCES)))
-
-# Compiled module files
-COMPILED_MODULES = $(patsubst %,$(BUILD_DIR)/modules/%.scpt,$(MODULE_NAMES))
-
-# Test files
 TEST_FILES     = $(wildcard $(TESTS_DIR)/*Tests.applescript)
+
+# Paths for compiled modules
+COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 
 # Default target
 all: build
 
-# Build all modules and the main script
-build: $(MAIN_COMPILED)
+# Main build target - now only compiles modules
+build: clean $(COMPILED_MODULES)
 
-# Rule to compile the main script, depends on modules being compiled
-$(MAIN_COMPILED): $(MAIN_SOURCE) $(COMPILED_MODULES)
-	@mkdir -p $(BUILD_DIR)
-	@echo "Compiling main script '$<' -> '$@'"
-	@osacompile -o "$@" "$<"
-
-# Rule to compile a single module
-$(BUILD_DIR)/modules/%.scpt: $(MODULES_DIR)/%.applescript
-	@mkdir -p $(BUILD_DIR)/modules
-	@echo "Compiling module '$<' -> '$@'"
+# Rule to compile a single module into the build directory
+$(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
+	@mkdir -p $(COMPILED_MODULES_DIR)
+	@echo "Compiling module: $<"
 	@osacompile -o "$@" "$<"
 
 # Run all tests
@@ -48,48 +39,21 @@ test: build
 		echo "---------------------------------"; \
 	done
 
-# CI-specific target generator
-define TEST_TEMPLATE
-test-$(1): build
-	@set -euo pipefail; \
-		echo "\n--- Running test for $(1) module... ---"; \
-	if ! osascript "$(TESTS_DIR)/$(1)Tests.applescript" 2>&1; then \
-			echo "Test failed with error"; \
-		exit 1; \
-	fi
-endef
-
-$(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
-
-test-Main: build
-	@set -euo pipefail; \
-		echo "\n--- Running test for Main script... ---"; \
-	if ! osascript "Tests/MainTests.applescript" 2>&1; then \
-			echo "Test failed with error"; \
-		exit 1; \
-	fi
-
-help:
-	@printf "Usage: make [target]\n\n"
-	@printf "Main Targets:\n"
-	@printf "  all\t\tBuild all modules and main script (default)\n"
-	@printf "  build\t\tBuild all modules and main script\n"
-	@printf "  test\t\tRun all unit tests\n"
-	@printf "  clean\t\tRemove build artifacts\n"
-	@printf "\nCI Targets (Dynamically Generated):\n"
-	@printf "  test-%%  (e.g., test-Network)\tCompile and test a specific module\n"
-	@echo "Usage: make [target]"
-	@echo "Main Targets:"
-	@echo "  all\t\tBuild all modules and main script (default)"
-	@echo "  build\t\tBuild all modules and main script"
-	@echo "  test\t\tRun all unit tests"
-	@echo "  clean\t\tRemove build artifacts"
-	@echo "\nCI Targets (Dynamically Generated):"
-	@echo "  test-%  (e.g., test-Network)\tCompile and test a specific module"
-
+# Clean build artifacts
 clean:
+	@echo "Cleaning build artifacts..."
 	-@rm -rf $(BUILD_DIR)
+	@echo "Done."
+
+# Help message
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all     Builds all modules (default)"
+	@echo "  build   Builds all modules"
+	@echo "  test    Runs all tests"
+	@echo "  clean   Removes all build artifacts"
+	@echo "  help    Shows this help message"
 
 .PHONY: all build test clean help
-# Add dynamic test targets to .PHONY
-.PHONY: $(patsubst %,test-%,$(MODULE_NAMES)) test-Main

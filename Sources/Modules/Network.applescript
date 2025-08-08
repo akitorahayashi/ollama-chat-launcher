@@ -26,7 +26,6 @@ end getIPAddress
 
 on isPortInUse(port_number, ip_address)
 	-- Checks if a given TCP port is currently in use on a specific IP address.
-	-- This is more precise because OLLAMA_HOST binds the server to a specific interface.
 	return ((do shell script "lsof -i @" & ip_address & ":" & port_number & " || true") is not "")
 end isPortInUse
 
