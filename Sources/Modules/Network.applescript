@@ -12,14 +12,14 @@ on getIPAddress()
 	-- 2. Wi-Fi
 	-- 3. Fallback (localhost)
 
-	set ip to my _getBridgeIP()
+	set ip to _getBridgeIP()
 
 	if ip is missing value then
-		set ip to my _getWifiIP()
+		set ip to _getWifiIP()
 	end if
 
 	if ip is missing value then
-		set ip to my _getLocalhostIP()
+		set ip to _getLocalhostIP()
 	end if
 
 	return ip

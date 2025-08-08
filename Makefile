@@ -55,6 +55,11 @@ endef
 
 $(foreach m,$(MODULE_NAMES),$(eval $(call TEST_TEMPLATE,$(m))))
 
+test-Main: build
+	@set -e; \
+	printf '\n--- Running test for Main script... ---\n'; \
+	osascript "Tests/MainTests.applescript"
+
 help:
 	@printf "Usage: make [target]\n\n"
 	@printf "Main Targets:\n"
@@ -70,4 +75,4 @@ clean:
 
 .PHONY: all build test clean help
 # Add dynamic test targets to .PHONY
-.PHONY: $(patsubst %,test-%,$(MODULE_NAMES))
+.PHONY: $(patsubst %,test-%,$(MODULE_NAMES)) test-Main
