@@ -1,3 +1,6 @@
+# Application name
+APP_NAME = Tinyllama
+
 # Directories
 SOURCES_DIR = Sources
 MODULES_DIR = $(SOURCES_DIR)/Modules
@@ -18,9 +21,26 @@ COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 # Default target
 all: build
 
+
 # Main build target
 build: clean $(COMPILED_MODULES) $(COMPILED_MAIN_SCRIPT)
 
+# Create .app and copy modules
+create: build
+	@echo "Removing old $(APP_NAME).app if exists..."
+	rm -rf $(APP_NAME).app
+	@echo "Compiling build/Main.scpt to $(APP_NAME).app..."
+	osacompile -o $(APP_NAME).app build/Main.scpt
+	@echo "Copying modules to $(APP_NAME).app..."
+	mkdir -p $(APP_NAME).app/Contents/Resources/Scripts/Modules
+	cp build/Modules/*.scpt $(APP_NAME).app/Contents/Resources/Scripts/Modules/
+	@echo "Done. $(APP_NAME).app is ready."
+
+# Run the .app
+run: create
+	@echo "Launching $(APP_NAME).app..."
+	open $(APP_NAME).app
+	
 # Rule to compile the main script
 $(COMPILED_MAIN_SCRIPT): $(MAIN_SOURCE)
 	@mkdir -p $(BUILD_DIR)
@@ -62,6 +82,8 @@ help:
 	@echo "Targets:"
 	@echo "  all     Builds all modules (default)"
 	@echo "  build   Builds all modules"
+	@echo "  create  Compiles and packages $(APP_NAME).app"
+	@echo "  run     Creates (if needed) and launches $(APP_NAME).app"
 	@echo "  test    Runs all tests"
 	@echo "  clean   Removes all build artifacts"
 	@echo "  help    Shows this help message"

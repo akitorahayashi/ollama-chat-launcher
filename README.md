@@ -53,6 +53,15 @@ The script will automatically detect the correct IP, check if a server is alread
 
 **Note:** On the first run, macOS may prompt for Automation permissions to control the Terminal application. Please allow it for the script to function correctly.
 
+## Create a .app
+
+This project uses the Makefile's `APP_NAME` variable to name the app.
+
+```bash
+make create   # compile and assemble $(APP_NAME).app
+make run      # create and launch $(APP_NAME).app
+```
+
 ## Development and How It Works
 
 - **`Sources/`**: Contains all AppleScript source code.

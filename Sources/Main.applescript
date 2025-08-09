@@ -16,23 +16,23 @@ global Network, ServerManager, CommandBuilder, WindowManager
 
 on loadModule(moduleName)
 	try
-		-- Running as App: Load Resources/Modules/moduleName.scpt
-		set modulePath to (path to resource ("Scripts:Modules:" & moduleName & ".scpt") in directory "Modules") as alias
+		-- Running as App
+		set modulePath to (path to resource (moduleName & ".scpt") in directory "Scripts/Modules") as alias
 		return load script file modulePath
 	on error errMsg number errNum
-		-- Running in Script Editor etc.: Load build/modules/moduleName.scpt
-		try
-			tell application "Finder"
-				set scriptFolder to container of (path to me) as text
-				set projectRoot to container of (scriptFolder as alias) as text
-			end tell
-			set modulePath to projectRoot & "build:Modules:" & moduleName & ".scpt"
-			set moduleAlias to alias modulePath
-			return load script file moduleAlias
-		on error innerErrMsg number innerErrNum
-			error "Failed to load module " & moduleName & ": " & innerErrMsg number innerErrNum
-		end try
-	end try
+		set scriptFolderPOSIX to do shell script "dirname " & quoted form of (POSIX path of (path to me))
+		set modulePrefixes to {"/Modules/", "/../build/Modules/"}
+		set triedPaths to {}
+		repeat with prefix in modulePrefixes
+			try
+				set modulePathPOSIX to scriptFolderPOSIX & prefix & moduleName & ".scpt"
+				set end of triedPaths to modulePathPOSIX
+				set moduleAlias to POSIX file modulePathPOSIX as alias
+				return load script file moduleAlias
+			end try
+		end repeat
+	end
+	error "Failed to load module " & moduleName & ". Tried paths: " & (triedPaths as string)
 end loadModule
 
 -- ==========================================
