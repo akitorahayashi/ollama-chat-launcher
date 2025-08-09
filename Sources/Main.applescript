@@ -17,7 +17,7 @@ global Network, ServerManager, CommandBuilder, WindowManager
 on loadModule(moduleName)
 	try
 		-- Running as App: Load Resources/Modules/moduleName.scpt
-		set modulePath to (path to resource (moduleName & ".scpt") in directory "Modules") as alias
+		set modulePath to (path to resource ("Scripts:Modules:" & moduleName & ".scpt") in directory "Modules") as alias
 		return load script file modulePath
 	on error errMsg number errNum
 		-- Running in Script Editor etc.: Load build/modules/moduleName.scpt
@@ -26,7 +26,7 @@ on loadModule(moduleName)
 				set scriptFolder to container of (path to me) as text
 				set projectRoot to container of (scriptFolder as alias) as text
 			end tell
-			set modulePath to projectRoot & "build:modules:" & moduleName & ".scpt"
+			set modulePath to projectRoot & "build:Modules:" & moduleName & ".scpt"
 			set moduleAlias to alias modulePath
 			return load script file moduleAlias
 		on error innerErrMsg number innerErrNum

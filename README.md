@@ -32,39 +32,41 @@ property OVERRIDE_IP_ADDRESS : missing value
 property OLLAMA_MODELS_PATH : "$HOME/.ollama/models"
 ```
 
-### 2. Build the Modules
+### 2. Build the Script
 
-The script is modular and requires its components to be compiled before the first run. The `Makefile` handles this process.
+The `Makefile` handles the compilation of the main script and all its modules.
 
 ```bash
 make build
 ```
-This command compiles the source files from `Sources/Modules/` into executable script objects (`.scpt`) in the `build/modules/` directory.
+This command compiles `Sources/Main.applescript` into `build/Main.scpt` and all modules from `Sources/Modules/` into the `build/Modules/` directory.
 
-### 3. Run from Script Editor
+### 3. Run the Compiled Script
 
-Run the main script `Sources/Main.applescript` directly from the Script Editor. The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window. On first run, macOS may prompt for Automation permissions to control Terminal—please allow it.
+Execute the compiled script from your terminal.
 
-### 4. Create a Standalone Application
+```bash
+osascript build/Main.scpt
+```
 
-You can create a standalone `.app` for easier access.
+The script will automatically detect the correct IP, check if a server is already running, and either create a new server instance or a new chat tab in the existing server's window. 
 
-1.  Open `Sources/Main.applescript` in Script Editor.
-2.  Choose `File > Export...` and set the `File Format` to `Application`.
-3.  In Finder, right-click the exported app and choose “Show Package Contents”, then create a `Modules` directory at: `YourApp.app/Contents/Resources/Modules/`.
-4.  Copy the compiled modules from `build/modules/` into the `Modules` directory you just created.
-5.  If you ever run `make build` again, you must re-copy the updated `.scpt` files into the app bundle.
-
-The script is designed to look for modules in this location when it's run as a standalone application.
+**Note:** On the first run, macOS may prompt for Automation permissions to control the Terminal application. Please allow it for the script to function correctly.
 
 ## Development and How It Works
 
 - **`Sources/`**: Contains all AppleScript source code.
   - `Main.applescript`: The main entry point and application logic.
   - `Modules/`: Helper modules for tasks like networking, window management, and command construction.
-- **`build/`**: Directory for compiled script objects. This is created by the `Makefile`.
+- **`build/`**: Directory for all compiled script objects (`.scpt`). This directory is created and managed by the `Makefile`.
+  - `Main.scpt`: The compiled, executable main script.
+  - `Modules/`: Contains all compiled helper modules.
 - **`Makefile`**: Provides commands for building and cleaning the project.
 
-### Module Loading
+### Build and Execution Flow
 
-When you run `Main.applescript` from the Script Editor, it **always** loads the compiled (`.scpt`) modules from the `build/modules/` directory. It does **not** load the raw `.applescript` source files. Therefore, you must run `make build` after any changes to the modules for them to take effect.
+1.  `make build` compiles all `.applescript` files from the `Sources` directory into `.scpt` files in the `build` directory.
+2.  Running `osascript build/Main.scpt` executes the main script.
+3.  The `Main.scpt` loads its required modules from the `build/Modules/` directory relative to its own location.
+
+This ensures that you are always running a fully compiled version of the script and its dependencies. Remember to run `make build` after making any changes to the source files.

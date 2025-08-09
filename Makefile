@@ -1,16 +1,16 @@
 # Directories
 SOURCES_DIR = Sources
 MODULES_DIR = $(SOURCES_DIR)/Modules
-TESTS_DIR   = Tests
 BUILD_DIR   = build
 
-# Directory for compiled modules
-COMPILED_MODULES_DIR = $(BUILD_DIR)/modules
+# Output directories
+COMPILED_MAIN_SCRIPT = $(BUILD_DIR)/Main.scpt
+COMPILED_MODULES_DIR = $(BUILD_DIR)/Modules
 
 # Source files
+MAIN_SOURCE    = $(SOURCES_DIR)/Main.applescript
 MODULE_SOURCES = $(wildcard $(MODULES_DIR)/*.applescript)
 MODULE_NAMES   := $(basename $(notdir $(MODULE_SOURCES)))
-TEST_FILES     = $(wildcard $(TESTS_DIR)/*Tests.applescript)
 
 # Paths for compiled modules
 COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
@@ -18,8 +18,14 @@ COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 # Default target
 all: build
 
-# Main build target - now only compiles modules
-build: clean $(COMPILED_MODULES)
+# Main build target
+build: clean $(COMPILED_MODULES) $(COMPILED_MAIN_SCRIPT)
+
+# Rule to compile the main script
+$(COMPILED_MAIN_SCRIPT): $(MAIN_SOURCE)
+	@mkdir -p $(BUILD_DIR)
+	@echo "Compiling main script: $<"
+	@osacompile -o "$@" "$<"
 
 # Rule to compile a single module into the build directory
 $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
