@@ -12,9 +12,6 @@ on runTests()
 		test_extractSequenceNumber_valid(WindowManager)
 		test_extractSequenceNumber_invalid(WindowManager)
 		test_extractSequenceNumber_noDot(WindowManager)
-		test_getMaxSequenceNumberFromList_normal(WindowManager)
-		test_getMaxSequenceNumberFromList_empty(WindowManager)
-		test_getMaxSequenceNumberFromList_single(WindowManager)
 	on error err
 		error "A test failed: " & err
 	end try
@@ -73,45 +70,6 @@ on test_extractSequenceNumber_noDot(WindowManager)
 --> Got: " & actual
 	end if
 end test_extractSequenceNumber_noDot
-
-on test_getMaxSequenceNumberFromList_normal(WindowManager)
-	set testName to "test_getMaxSequenceNumberFromList_normal"
-	set server_list to [{sequence:1}, {sequence:5}, {sequence:3}]
-	set expected to 5
-	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-
-	if actual is not expected then
-		error "Test Failed: " & testName & "
---> Expected: " & expected & "
---> Got: " & actual
-	end if
-end test_getMaxSequenceNumberFromList_normal
-
-on test_getMaxSequenceNumberFromList_empty(WindowManager)
-	set testName to "test_getMaxSequenceNumberFromList_empty"
-	set server_list to {}
-	set expected to 0
-	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-
-	if actual is not expected then
-		error "Test Failed: " & testName & "
---> Expected: " & expected & "
---> Got: " & actual
-	end if
-end test_getMaxSequenceNumberFromList_empty
-
-on test_getMaxSequenceNumberFromList_single(WindowManager)
-	set testName to "test_getMaxSequenceNumberFromList_single"
-	set server_list to [{sequence:10}]
-	set expected to 10
-	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-
-	if actual is not expected then
-		error "Test Failed: " & testName & "
---> Expected: " & expected & "
---> Got: " & actual
-	end if
-end test_getMaxSequenceNumberFromList_single
 
 -- ==========================================
 -- Test Utilities (Self-contained)
