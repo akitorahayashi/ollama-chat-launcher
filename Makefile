@@ -62,13 +62,13 @@ $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 	@osacompile -o "$@" "$<"
 
 # Rule to run a single test
-test-%:
-	@printf '\n----- Running %s -----\n' "$(TESTS_DIR)/$*.applescript"
+test-%: build
+	@printf '\n----- Running test for %s -----\n' "$*"
 	@osascript "$(TESTS_DIR)/$*.applescript"
 	@echo "---------------------------------"
 
 # Run all tests
-test: $(test_targets)
+test: build $(test_targets)
 	@echo "\nAll tests completed successfully."
 
 # Clean build artifacts
