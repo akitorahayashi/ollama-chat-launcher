@@ -66,7 +66,9 @@ $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 # Depends on `build` to ensure modules are compiled, and on the test script itself
 # so that changes to the test trigger a re-run.
 # We explicitly exit with 1 on failure to ensure CI catches errors.
-test-%: build $(TESTS_DIR)/%.applescript
+FORCE:
+
+test-%: build $(TESTS_DIR)/%.applescript FORCE
 	@printf '\n----- Running test for %s -----\n' "$*"
 	@osascript "$(TESTS_DIR)/$*.applescript" || (echo "---- TEST FAILED: $* ----" && exit 1)
 	@echo "---- Test PASSED: $* ----"
@@ -95,4 +97,5 @@ help:
 	@echo "  clean      Removes all build artifacts"
 	@echo "  help       Shows this help message"
 
-.PHONY: all build create run test $(test_targets) clean help
+.PHONY: all build create run test clean help
+.PHONY: test-%
