@@ -81,15 +81,20 @@ end generateWindowTitle
 
 -- Finds the highest sequence number from existing server window titles to avoid duplicates.
 on getMaxSequenceNumber(wifi_ip, ollama_port)
-	set max_seq to 0
 	set server_windows to my _findServerWindows(wifi_ip, ollama_port)
+	return my _getMaxSequenceNumberFromList(server_windows)
+end getMaxSequenceNumber
+
+-- Testable helper that extracts the max sequence number from a list of server info records.
+on _getMaxSequenceNumberFromList(server_windows)
+	set max_seq to 0
 	repeat with server_info in server_windows
 		if server_info's sequence > max_seq then
 			set max_seq to server_info's sequence
 		end if
 	end repeat
 	return max_seq
-end getMaxSequenceNumber
+end _getMaxSequenceNumberFromList
 
 -- Finds the most recent server window by looking for the highest sequence number in its title.
 on findLatestServerWindow(wifi_ip, ollama_port)
