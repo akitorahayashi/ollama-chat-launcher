@@ -1,15 +1,24 @@
 -- WindowManager.applescript
 -- This module handles window and tab creation, naming, and window searching functionality.
 
+property WINDOW_CREATION_TIMEOUT : 5
+property TAB_CREATION_TIMEOUT : 5
+
 -- Creates a new Terminal window and sets its title.
 on createNewWindow(title)
 	tell application "Terminal"
 		activate
+		set initial_window_count to count of windows
 		-- Use UI scripting to ensure a new window is created and brought to the front.
 		tell application "System Events"
 			keystroke "n" using command down
 		end tell
-		delay 0.5 -- Wait for the new window to be ready.
+
+		-- Wait for the new window to appear.
+		if not my waitForNewWindow(initial_window_count, WINDOW_CREATION_TIMEOUT) then
+			error "Failed to create a new window in time."
+		end if
+
 		set new_window to front window
 		set custom title of new_window to title
 		return new_window
@@ -21,15 +30,49 @@ on openNewTabInWindow(target_window)
 	tell application "Terminal"
 		activate
 		set selected of target_window to true
+		set initial_tab_count to count of tabs of target_window
 		-- Use UI scripting to create a new tab in the active window.
 		tell application "System Events"
 			keystroke "t" using command down
 		end tell
-		delay 0.5 -- Wait for the new tab to be ready.
+
+		-- Wait for the new tab to be created.
+		if not my waitForNewTab(target_window, initial_tab_count, TAB_CREATION_TIMEOUT) then
+			error "Failed to create a new tab in time."
+		end if
+
 		set new_tab to selected tab of front window
 		return new_tab
 	end tell
 end openNewTabInWindow
+
+-- Waits for a new window to be created by checking the window count.
+on waitForNewWindow(initial_count, timeout)
+	set elapsed to 0
+	repeat while (count of windows of application "Terminal") <= initial_count
+		delay 0.2
+		set elapsed to elapsed + 0.2
+		if elapsed > timeout then
+			log "Timeout waiting for new window."
+			return false
+		end if
+	end repeat
+	return true
+end waitForNewWindow
+
+-- Waits for a new tab to be created in a specific window.
+on waitForNewTab(target_window, initial_tab_count, timeout)
+	set elapsed to 0
+	repeat while (count of tabs of target_window) <= initial_tab_count
+		delay 0.2
+		set elapsed to elapsed + 0.2
+		if elapsed > timeout then
+			log "Timeout waiting for new tab."
+			return false
+		end if
+	end repeat
+	return true
+end waitForNewTab
 
 -- Generates a standardized window title. Format: <sequence>.<model_name> Server [<ip>:<port>]
 on generateWindowTitle(wifi_ip, sequence_number, ollama_port, model_name)

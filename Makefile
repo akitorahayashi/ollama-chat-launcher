@@ -1,9 +1,14 @@
+# Use bash with strict error handling for all shell commands
+SHELL := /bin/bash
+.SHELLFLAGS := -euo pipefail -c
+
 # Application name
 APP_NAME = Tinyllama
 
 # Directories
 SOURCES_DIR = Sources
 MODULES_DIR = $(SOURCES_DIR)/Modules
+TESTS_DIR   = Tests
 BUILD_DIR   = build
 
 # Output directories
@@ -13,14 +18,18 @@ COMPILED_MODULES_DIR = $(BUILD_DIR)/Modules
 # Source files
 MAIN_SOURCE    = $(SOURCES_DIR)/Main.applescript
 MODULE_SOURCES = $(wildcard $(MODULES_DIR)/*.applescript)
+TEST_SOURCES   = $(wildcard $(TESTS_DIR)/*.applescript)
 MODULE_NAMES   := $(basename $(notdir $(MODULE_SOURCES)))
+TEST_NAMES     := $(basename $(notdir $(TEST_SOURCES)))
 
 # Paths for compiled modules
 COMPILED_MODULES = $(patsubst %,$(COMPILED_MODULES_DIR)/%.scpt,$(MODULE_NAMES))
 
+# Dynamically generate test targets
+test_targets = $(patsubst %,test-%,$(TEST_NAMES))
+
 # Default target
 all: build
-
 
 # Main build target
 build: clean $(COMPILED_MODULES) $(COMPILED_MAIN_SCRIPT)
@@ -40,7 +49,7 @@ create: build
 run: create
 	@echo "Launching $(APP_NAME).app..."
 	open $(APP_NAME).app
-	
+
 # Rule to compile the main script
 $(COMPILED_MAIN_SCRIPT): $(MAIN_SOURCE)
 	@mkdir -p $(BUILD_DIR)
@@ -53,21 +62,15 @@ $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 	@echo "Compiling module: $<"
 	@osacompile -o "$@" "$<"
 
+# Rule to run a single test
+test-%: build
+	@printf '\n----- Running test for %s -----\n' "$*"
+	@osascript "$(TESTS_DIR)/$*.applescript"
+	@echo "---------------------------------"
+
 # Run all tests
-test: build
-	@if [ -z "$(TEST_FILES)" ]; then \
-		echo "No test files found in $(TESTS_DIR)/. Skipping tests."; \
-	else \
-		set -euo pipefail; \
-		for test_file in $(TEST_FILES); do \
-			printf '\n----- Running %s -----\n' "$$test_file"; \
-			if ! osascript "$$test_file" 2>&1; then \
-				echo "Test $$test_file failed with error"; \
-				exit 1; \
-			fi; \
-			echo "---------------------------------"; \
-		done; \
-	fi
+test: build $(test_targets)
+	@echo "\nAll tests completed successfully."
 
 # Clean build artifacts
 clean:
@@ -80,12 +83,13 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all     Builds all modules (default)"
-	@echo "  build   Builds all modules"
-	@echo "  create  Compiles and packages $(APP_NAME).app"
-	@echo "  run     Creates (if needed) and launches $(APP_NAME).app"
-	@echo "  test    Runs all tests"
-	@echo "  clean   Removes all build artifacts"
-	@echo "  help    Shows this help message"
+	@echo "  all        Builds all modules (default)"
+	@echo "  build      Builds all modules"
+	@echo "  create     Compiles and packages $(APP_NAME).app"
+	@echo "  run        Creates (if needed) and launches $(APP_NAME).app"
+	@echo "  test       Runs all tests"
+	@echo "  test-<name> Runs a specific test (e.g., make test-CommandBuilderTests)"
+	@echo "  clean      Removes all build artifacts"
+	@echo "  help       Shows this help message"
 
-.PHONY: all build test clean help
+.PHONY: all build create run test $(test_targets) clean help
