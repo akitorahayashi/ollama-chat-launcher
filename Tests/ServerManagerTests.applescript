@@ -1,49 +1,59 @@
 -- Tests for ServerManager.applescript
 
--- Load the test helper script
-set testHelperPath to (path to me as text) & "TestHelper.applescript"
-set TestHelper to load script file testHelperPath
-
--- Load the module to be tested
-set ServerManager to TestHelper's loadModuleForTest("ServerManager", false)
-
--- Run all tests
-runTests()
-
+-- ==========================================
+-- Test Runner
+-- ==========================================
 on runTests()
 	log "Running tests for ServerManager.applescript"
+	set ServerManager to loadModuleForTest("ServerManager", false)
 
 	try
-		test_roundDown_positive()
-		test_roundDown_integer()
-		test_roundDown_zero()
-
-		log "All ServerManager tests passed."
+		test_roundDown_positive(ServerManager)
+		test_roundDown_integer(ServerManager)
+		test_roundDown_zero(ServerManager)
 	on error err
-		log "A test failed: " & err
-		error err
+		-- Re-throw the error to ensure the test runner (make) catches it
+		error "A test failed: " & err
 	end try
-
-	log "Tests for ServerManager.applescript completed."
 end runTests
 
--- Test cases
-on test_roundDown_positive()
+-- ==========================================
+-- Test Cases
+-- ==========================================
+on test_roundDown_positive(ServerManager)
+	set testName to "test_roundDown_positive"
 	set expected to 5
 	set actual to ServerManager's roundDown(5.7)
-	TestHelper's assertEquals(expected, actual, "test_roundDown_positive")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_roundDown_positive
 
-on test_roundDown_integer()
+on test_roundDown_integer(ServerManager)
+	set testName to "test_roundDown_integer"
 	set expected to 10
 	set actual to ServerManager's roundDown(10)
-	TestHelper's assertEquals(expected, actual, "test_roundDown_integer")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_roundDown_integer
 
-on test_roundDown_zero()
+on test_roundDown_zero(ServerManager)
+	set testName to "test_roundDown_zero"
 	set expected to 0
 	set actual to ServerManager's roundDown(0.2)
-	TestHelper's assertEquals(expected, actual, "test_roundDown_zero")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_roundDown_zero
 
 -- NOTE: The following handlers are not tested because they involve
@@ -54,3 +64,28 @@ end test_roundDown_zero
 -- - waitForServer
 -- - executeModelInWindow
 -- - openChatInNewWindow
+
+-- ==========================================
+-- Test Utilities (Self-contained)
+-- ==========================================
+on loadModuleForTest(moduleName, isMain)
+	try
+		set scriptPath to POSIX path of (path to me)
+		set testsDir to do shell script "dirname " & quoted form of scriptPath
+		set projectRoot to do shell script "dirname " & quoted form of testsDir
+
+		set modulePathPOSIX to ""
+		if isMain is true then
+			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+		else
+			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+		end if
+
+		return load script file (modulePathPOSIX)
+	on error errMsg number errNum
+		error "Test failed to load module '" & moduleName & "'. Reason: " & errMsg
+	end try
+end loadModuleForTest
+
+-- Run the tests
+runTests()

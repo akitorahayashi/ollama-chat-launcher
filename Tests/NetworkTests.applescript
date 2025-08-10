@@ -1,55 +1,82 @@
 -- Tests for Network.applescript
 
--- Load the test helper script
-set testHelperPath to (path to me as text) & "TestHelper.applescript"
-set TestHelper to load script file testHelperPath
-
--- Load the module to be tested
-set Network to TestHelper's loadModuleForTest("Network", false)
-
--- Run all tests
-runTests()
-
+-- ==========================================
+-- Test Runner
+-- ==========================================
 on runTests()
 	log "Running tests for Network.applescript"
+	set Network to loadModuleForTest("Network", false)
 
 	try
 		-- Reset test flags before each run
 		set Network's _forceWifiFailureForTesting to false
 
-		test_getIPAddress_withOverride()
-		test_getIPAddress_fallbackToLocalhost()
-		-- We don't test the success case for Wi-Fi as it depends on the machine's state.
-		-- The fallback test covers the other branch of the logic.
+		test_getIPAddress_withOverride(Network)
+		test_getIPAddress_fallbackToLocalhost(Network)
 
-		log "All Network tests passed."
 	on error err
 		-- Ensure flag is reset even if a test fails
 		set Network's _forceWifiFailureForTesting to false
-		log "A test failed: " & err
-		error err
+		-- Re-throw the error to ensure the test runner (make) catches it
+		error "A test failed: " & err
 	end try
-
-	log "Tests for Network.applescript completed."
 end runTests
 
--- Test cases
-on test_getIPAddress_withOverride()
-	set override_ip to "1.2.3.4"
-	set actual_ip to Network's getIPAddress(override_ip)
-	TestHelper's assertEquals(override_ip, actual_ip, "test_getIPAddress_withOverride")
+-- ==========================================
+-- Test Cases
+-- ==========================================
+on test_getIPAddress_withOverride(Network)
+	set testName to "test_getIPAddress_withOverride"
+	set expected to "1.2.3.4"
+	set actual to Network's getIPAddress(expected)
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_getIPAddress_withOverride
 
-on test_getIPAddress_fallbackToLocalhost()
+on test_getIPAddress_fallbackToLocalhost(Network)
+	set testName to "test_getIPAddress_fallbackToLocalhost"
 	-- Set the test flag to force the fallback logic
 	set Network's _forceWifiFailureForTesting to true
 
-	set expected_ip to "127.0.0.1"
+	set expected to "127.0.0.1"
 	-- Pass missing value to ensure the override is not used
-	set actual_ip to Network's getIPAddress(missing value)
+	set actual to Network's getIPAddress(missing value)
 
 	-- Reset the flag immediately after the call
 	set Network's _forceWifiFailureForTesting to false
 
-	TestHelper's assertEquals(expected_ip, actual_ip, "test_getIPAddress_fallbackToLocalhost")
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_getIPAddress_fallbackToLocalhost
+
+-- ==========================================
+-- Test Utilities (Self-contained)
+-- ==========================================
+on loadModuleForTest(moduleName, isMain)
+	try
+		set scriptPath to POSIX path of (path to me)
+		set testsDir to do shell script "dirname " & quoted form of scriptPath
+		set projectRoot to do shell script "dirname " & quoted form of testsDir
+
+		set modulePathPOSIX to ""
+		if isMain is true then
+			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+		else
+			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+		end if
+
+		return load script file (modulePathPOSIX)
+	on error errMsg number errNum
+		error "Test failed to load module '" & moduleName & "'. Reason: " & errMsg
+	end try
+end loadModuleForTest
+
+-- Run the tests
+runTests()

@@ -1,81 +1,140 @@
 -- Tests for WindowManager.applescript
 
--- Load the test helper script
-set testHelperPath to (path to me as text) & "TestHelper.applescript"
-set TestHelper to load script file testHelperPath
-
--- Load the module to be tested
-set WindowManager to TestHelper's loadModuleForTest("WindowManager", false)
-
--- Run all tests
-runTests()
-
+-- ==========================================
+-- Test Runner
+-- ==========================================
 on runTests()
 	log "Running tests for WindowManager.applescript"
+	set WindowManager to loadModuleForTest("WindowManager", false)
 
 	try
-		test_generateWindowTitle()
-		test_extractSequenceNumber_valid()
-		test_extractSequenceNumber_invalid()
-		test_extractSequenceNumber_noDot()
-		test_getMaxSequenceNumberFromList_normal()
-		test_getMaxSequenceNumberFromList_empty()
-		test_getMaxSequenceNumberFromList_single()
-
-		log "All WindowManager tests passed."
+		test_generateWindowTitle(WindowManager)
+		test_extractSequenceNumber_valid(WindowManager)
+		test_extractSequenceNumber_invalid(WindowManager)
+		test_extractSequenceNumber_noDot(WindowManager)
+		test_getMaxSequenceNumberFromList_normal(WindowManager)
+		test_getMaxSequenceNumberFromList_empty(WindowManager)
+		test_getMaxSequenceNumberFromList_single(WindowManager)
 	on error err
-		log "A test failed: " & err
-		error err
+		-- Re-throw the error to ensure the test runner (make) catches it
+		error "A test failed: " & err
 	end try
-
-	log "Tests for WindowManager.applescript completed."
 end runTests
 
--- Test cases
-on test_generateWindowTitle()
+-- ==========================================
+-- Test Cases
+-- ==========================================
+on test_generateWindowTitle(WindowManager)
+	set testName to "test_generateWindowTitle"
 	set expected to "3.llama2 Server [192.168.1.1:12345]"
 	set actual to WindowManager's generateWindowTitle("192.168.1.1", 3, 12345, "llama2")
-	TestHelper's assertEquals(expected, actual, "test_generateWindowTitle")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_generateWindowTitle
 
-on test_extractSequenceNumber_valid()
+on test_extractSequenceNumber_valid(WindowManager)
+	set testName to "test_extractSequenceNumber_valid"
 	set title to "12.some-model Server [1.2.3.4:5678]"
 	set expected to 12
 	set actual to WindowManager's _extractSequenceNumber(title)
-	TestHelper's assertEquals(expected, actual, "test_extractSequenceNumber_valid")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_extractSequenceNumber_valid
 
-on test_extractSequenceNumber_invalid()
+on test_extractSequenceNumber_invalid(WindowManager)
+	set testName to "test_extractSequenceNumber_invalid"
 	set title to "invalid.some-model Server [1.2.3.4:5678]"
 	set expected to missing value
 	set actual to WindowManager's _extractSequenceNumber(title)
-	TestHelper's assertEquals(expected, actual, "test_extractSequenceNumber_invalid")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: missing value
+--> Got: " & actual
+	end if
 end test_extractSequenceNumber_invalid
 
-on test_extractSequenceNumber_noDot()
+on test_extractSequenceNumber_noDot(WindowManager)
+	set testName to "test_extractSequenceNumber_noDot"
 	set title to "no-dot-title"
 	set expected to missing value
 	set actual to WindowManager's _extractSequenceNumber(title)
-	TestHelper's assertEquals(expected, actual, "test_extractSequenceNumber_noDot")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: missing value
+--> Got: " & actual
+	end if
 end test_extractSequenceNumber_noDot
 
-on test_getMaxSequenceNumberFromList_normal()
+on test_getMaxSequenceNumberFromList_normal(WindowManager)
+	set testName to "test_getMaxSequenceNumberFromList_normal"
 	set server_list to [{sequence:1}, {sequence:5}, {sequence:3}]
 	set expected to 5
 	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-	TestHelper's assertEquals(expected, actual, "test_getMaxSequenceNumberFromList_normal")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_getMaxSequenceNumberFromList_normal
 
-on test_getMaxSequenceNumberFromList_empty()
+on test_getMaxSequenceNumberFromList_empty(WindowManager)
+	set testName to "test_getMaxSequenceNumberFromList_empty"
 	set server_list to {}
 	set expected to 0
 	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-	TestHelper's assertEquals(expected, actual, "test_getMaxSequenceNumberFromList_empty")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_getMaxSequenceNumberFromList_empty
 
-on test_getMaxSequenceNumberFromList_single()
+on test_getMaxSequenceNumberFromList_single(WindowManager)
+	set testName to "test_getMaxSequenceNumberFromList_single"
 	set server_list to [{sequence:10}]
 	set expected to 10
 	set actual to WindowManager's _getMaxSequenceNumberFromList(server_list)
-	TestHelper's assertEquals(expected, actual, "test_getMaxSequenceNumberFromList_single")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_getMaxSequenceNumberFromList_single
+
+-- ==========================================
+-- Test Utilities (Self-contained)
+-- ==========================================
+on loadModuleForTest(moduleName, isMain)
+	try
+		set scriptPath to POSIX path of (path to me)
+		set testsDir to do shell script "dirname " & quoted form of scriptPath
+		set projectRoot to do shell script "dirname " & quoted form of testsDir
+
+		set modulePathPOSIX to ""
+		if isMain is true then
+			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+		else
+			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+		end if
+
+		return load script file (modulePathPOSIX)
+	on error errMsg number errNum
+		error "Test failed to load module '" & moduleName & "'. Reason: " & errMsg
+	end try
+end loadModuleForTest
+
+-- Run the tests
+runTests()

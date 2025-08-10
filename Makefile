@@ -63,10 +63,12 @@ $(COMPILED_MODULES_DIR)/%.scpt: $(MODULES_DIR)/%.applescript
 	@osacompile -o "$@" "$<"
 
 # Rule to run a single test
-test-%: build
+# This does not depend on `build` because the tests load the source .applescript files directly.
+# We explicitly exit with 1 on failure to ensure CI catches errors.
+test-%:
 	@printf '\n----- Running test for %s -----\n' "$*"
-	@osascript "$(TESTS_DIR)/$*.applescript"
-	@echo "---------------------------------"
+	@osascript "$(TESTS_DIR)/$*.applescript" || (echo "---- TEST FAILED: $* ----" && exit 1)
+	@echo "---- Test PASSED: $* ----"
 
 # Run all tests
 test: build $(test_targets)

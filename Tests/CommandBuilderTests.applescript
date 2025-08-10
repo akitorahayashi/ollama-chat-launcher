@@ -1,35 +1,28 @@
 -- Tests for CommandBuilder.applescript
 
--- Load the test helper script
-set testHelperPath to (path to me as text) & "TestHelper.applescript"
-set TestHelper to load script file testHelperPath
-
--- Load the module to be tested
-set CommandBuilder to TestHelper's loadModuleForTest("CommandBuilder", false)
-
--- Run all tests
-runTests()
-
+-- ==========================================
+-- Test Runner
+-- ==========================================
 on runTests()
 	log "Running tests for CommandBuilder.applescript"
+	set CommandBuilder to loadModuleForTest("CommandBuilder", false)
 
 	try
-		test_buildServerCommand()
-		test_buildModelCommand()
-		test_escapeShellParameter_simple()
-		test_escapeShellParameter_withSpaces()
-
-		log "All CommandBuilder tests passed."
+		test_buildServerCommand(CommandBuilder)
+		test_buildModelCommand(CommandBuilder)
+		test_escapeShellParameter_simple(CommandBuilder)
+		test_escapeShellParameter_withSpaces(CommandBuilder)
 	on error err
-		log "A test failed: " & err
-		error err
+		-- Re-throw the error to ensure the test runner (make) catches it
+		error "A test failed: " & err
 	end try
-
-	log "Tests for CommandBuilder.applescript completed."
 end runTests
 
--- Test cases
-on test_buildServerCommand()
+-- ==========================================
+-- Test Cases
+-- ==========================================
+on test_buildServerCommand(CommandBuilder)
+	set testName to "test_buildServerCommand"
 	set ip_address to "192.168.1.100"
 	set port to "8080"
 	set model_name to "test-model"
@@ -43,35 +36,80 @@ on test_buildServerCommand()
 		"echo '--------------------------'; " & ¬
 		"echo 'Starting Ollama server...';"
 	set expected_server to "OLLAMA_MODELS='/Users/test/models' OLLAMA_HOST=http://192.168.1.100:8080 ollama serve"
-	set expected_command to expected_display & " " & expected_server
+	set expected to expected_display & " " & expected_server
 
-	set actual_command to CommandBuilder's buildServerCommand(ip_address, port, model_name, models_path)
+	set actual to CommandBuilder's buildServerCommand(ip_address, port, model_name, models_path)
 
-	TestHelper's assertEquals(expected_command, actual_command, "test_buildServerCommand")
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_buildServerCommand
 
-on test_buildModelCommand()
+on test_buildModelCommand(CommandBuilder)
+	set testName to "test_buildModelCommand"
 	set ip_address to "127.0.0.1"
 	set port to "11434"
 	set model_name to "llama2"
 
-	set expected_command to "OLLAMA_HOST=http://127.0.0.1:11434 ollama run 'llama2'"
+	set expected to "OLLAMA_HOST=http://127.0.0.1:11434 ollama run 'llama2'"
+	set actual to CommandBuilder's buildModelCommand(ip_address, port, model_name)
 
-	set actual_command to CommandBuilder's buildModelCommand(ip_address, port, model_name)
-
-	TestHelper's assertEquals(expected_command, actual_command, "test_buildModelCommand")
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_buildModelCommand
 
-on test_escapeShellParameter_simple()
+on test_escapeShellParameter_simple(CommandBuilder)
+	set testName to "test_escapeShellParameter_simple"
 	set param to "simple"
 	set expected to "'simple'"
 	set actual to CommandBuilder's escapeShellParameter(param)
-	TestHelper's assertEquals(expected, actual, "test_escapeShellParameter_simple")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_escapeShellParameter_simple
 
-on test_escapeShellParameter_withSpaces()
+on test_escapeShellParameter_withSpaces(CommandBuilder)
+	set testName to "test_escapeShellParameter_withSpaces"
 	set param to "parameter with spaces"
 	set expected to "'parameter with spaces'"
 	set actual to CommandBuilder's escapeShellParameter(param)
-	TestHelper's assertEquals(expected, actual, "test_escapeShellParameter_withSpaces")
+
+	if actual is not expected then
+		error "Test Failed: " & testName & "
+--> Expected: " & expected & "
+--> Got: " & actual
+	end if
 end test_escapeShellParameter_withSpaces
+
+-- ==========================================
+-- Test Utilities (Self-contained)
+-- ==========================================
+on loadModuleForTest(moduleName, isMain)
+	try
+		set scriptPath to POSIX path of (path to me)
+		set testsDir to do shell script "dirname " & quoted form of scriptPath
+		set projectRoot to do shell script "dirname " & quoted form of testsDir
+
+		set modulePathPOSIX to ""
+		if isMain is true then
+			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+		else
+			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+		end if
+
+		return load script file (modulePathPOSIX)
+	on error errMsg number errNum
+		error "Test failed to load module '" & moduleName & "'. Reason: " & errMsg
+	end try
+end loadModuleForTest
+
+-- Run the tests
+runTests()
