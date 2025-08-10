@@ -47,29 +47,29 @@ on openNewTabInWindow(target_window)
 end openNewTabInWindow
 
 -- Waits for a new window to be created by checking the window count.
-on waitForNewWindow(initial_count, timeout)
+on waitForNewWindow(initial_count, timeoutSeconds)
 	set elapsed to 0
 	repeat while (count of windows of application "Terminal") <= initial_count
 		delay 0.2
 		set elapsed to elapsed + 0.2
-		if elapsed > timeout then
-			log "Timeout waiting for new window."
-			return false
-		end if
+ 		if elapsed > timeoutSeconds then
+ 			log "Timeout waiting for new window."
+ 			return false
+ 		end if
 	end repeat
 	return true
 end waitForNewWindow
 
 -- Waits for a new tab to be created in a specific window.
-on waitForNewTab(target_window, initial_tab_count, timeout)
+on waitForNewTab(target_window, initial_tab_count, timeoutSeconds)
 	set elapsed to 0
 	repeat while (count of tabs of target_window) <= initial_tab_count
 		delay 0.2
 		set elapsed to elapsed + 0.2
-		if elapsed > timeout then
-			log "Timeout waiting for new tab."
-			return false
-		end if
+ 		if elapsed > timeoutSeconds then
+ 			log "Timeout waiting for new tab."
+ 			return false
+ 		end if
 	end repeat
 	return true
 end waitForNewTab

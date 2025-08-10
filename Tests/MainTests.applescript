@@ -107,7 +107,7 @@ on loadModuleForTest(moduleName, isMain)
 			set modulePathPOSIX to projectRoot & "/build/Modules/" & moduleName & ".scpt"
 		end if
 
-		return load script file (modulePathPOSIX)
+		return load script (POSIX file modulePathPOSIX as alias)
 	on error errMsg number errNum
 		error "Test failed to load module '" & moduleName & "'. Reason: " & errMsg
 	end try
