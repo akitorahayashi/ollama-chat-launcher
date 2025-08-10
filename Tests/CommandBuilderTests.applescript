@@ -23,7 +23,7 @@ end runTests
 on test_buildServerCommand(CommandBuilder)
 	set testName to "test_buildServerCommand"
 	set ip_address to "192.168.1.100"
-	set port to "8080"
+	set serverPort to "8080"
 	set model_name to "test-model"
 	set models_path to "/Users/test/models"
 
@@ -37,28 +37,24 @@ on test_buildServerCommand(CommandBuilder)
 	set expected_server to "OLLAMA_MODELS='/Users/test/models' OLLAMA_HOST=http://192.168.1.100:8080 ollama serve"
 	set expected to expected_display & " " & expected_server
 
-	set actual to CommandBuilder's buildServerCommand(ip_address, port, model_name, models_path)
+	set actual to CommandBuilder's buildServerCommand(ip_address, serverPort, model_name, models_path)
 
 	if actual is not expected then
-		error "Test Failed: " & testName & "
---> Expected: " & expected & "
---> Got: " & actual
+		error "Test Failed: " & testName & ""
 	end if
 end test_buildServerCommand
 
 on test_buildModelCommand(CommandBuilder)
 	set testName to "test_buildModelCommand"
 	set ip_address to "127.0.0.1"
-	set port to "11434"
+	set serverPort to "11434"
 	set model_name to "llama2"
 
 	set expected to "OLLAMA_HOST=http://127.0.0.1:11434 ollama run 'llama2'"
-	set actual to CommandBuilder's buildModelCommand(ip_address, port, model_name)
+	set actual to CommandBuilder's buildModelCommand(ip_address, serverPort, model_name)
 
 	if actual is not expected then
-		error "Test Failed: " & testName & "
---> Expected: " & expected & "
---> Got: " & actual
+		error "Test Failed: " & testName & ""
 	end if
 end test_buildModelCommand
 
