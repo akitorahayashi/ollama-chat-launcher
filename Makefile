@@ -1,5 +1,6 @@
 # Use bash with strict error handling for all shell commands
-SHELL := /bin/bash -euo pipefail
+SHELL := /bin/bash
+.SHELLFLAGS := -euo pipefail -c
 
 # Application name
 APP_NAME = Tinyllama

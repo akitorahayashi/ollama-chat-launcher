@@ -86,16 +86,9 @@ try
 			log "Found existing server window. Creating new chat tab."
 			ServerManager's executeModelInWindow(server_info's window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
 		else
-			log "Server is running but no corresponding window found. Creating new window and chat tab."
-			-- If the server is running but there is no window, start only the chat in a new window
-			set server_window to ServerManager's startServer(ip_to_use, OLLAMA_PORT, MODEL_NAME, expanded_models_path, CommandBuilder, WindowManager)
-			delay 1
-			ServerManager's executeModelInWindow(server_window, ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
+			log "Server is running but no corresponding window found. Creating a new window for chat."
+			ServerManager's openChatInNewWindow(ip_to_use, OLLAMA_PORT, MODEL_NAME, CommandBuilder, WindowManager)
 		end if
-
-		-- Show dialog and exit if server is already running
-		-- display dialog "Ollama server is already running on " & ip_to_use & ":" & OLLAMA_PORT & ".\nPlease use the existing server window." with title "Server Already Running" buttons {"OK"} default button "OK"
-		-- return
 	else
 		log "No Ollama server running on " & ip_to_use & ":" & OLLAMA_PORT & ". Checking if port is available."
 		-- If the server is not running, check if the port is in use

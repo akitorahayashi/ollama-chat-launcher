@@ -58,3 +58,14 @@ on executeModelInWindow(target_window, ip_address, port, model_name, CommandBuil
 	end tell
 	return new_tab
 end executeModelInWindow
+
+on openChatInNewWindow(ip_address, port, model_name, CommandBuilder, WindowManager)
+	set model_command to CommandBuilder's buildModelCommand(ip_address, port, model_name)
+	set next_seq to (WindowManager's getMaxSequenceNumber(ip_address, port) + 1)
+	set window_title to WindowManager's generateWindowTitle(ip_address, next_seq, port, model_name)
+	set new_chat_window to WindowManager's createNewWindow(window_title)
+	tell application "Terminal"
+		do script model_command in new_chat_window
+	end tell
+	return new_chat_window
+end openChatInNewWindow
