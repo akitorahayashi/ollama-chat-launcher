@@ -17,7 +17,6 @@ on runTests()
 	on error err
 		-- Ensure flag is reset even if a test fails
 		set Network's _forceWifiFailureForTesting to false
-		-- Re-throw the error to ensure the test runner (make) catches it
 		error "A test failed: " & err
 	end try
 end runTests
@@ -39,14 +38,11 @@ end test_getIPAddress_withOverride
 
 on test_getIPAddress_fallbackToLocalhost(Network)
 	set testName to "test_getIPAddress_fallbackToLocalhost"
-	-- Set the test flag to force the fallback logic
 	set Network's _forceWifiFailureForTesting to true
 
 	set expected to "127.0.0.1"
-	-- Pass missing value to ensure the override is not used
 	set actual to Network's getIPAddress(missing value)
 
-	-- Reset the flag immediately after the call
 	set Network's _forceWifiFailureForTesting to false
 
 	if actual is not expected then
@@ -67,9 +63,9 @@ on loadModuleForTest(moduleName, isMain)
 
 		set modulePathPOSIX to ""
 		if isMain is true then
-			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+			set modulePathPOSIX to projectRoot & "/build/" & moduleName & ".scpt"
 		else
-			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+			set modulePathPOSIX to projectRoot & "/build/Modules/" & moduleName & ".scpt"
 		end if
 
 		return load script file (modulePathPOSIX)

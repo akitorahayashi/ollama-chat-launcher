@@ -16,7 +16,6 @@ on runTests()
 		test_getMaxSequenceNumberFromList_empty(WindowManager)
 		test_getMaxSequenceNumberFromList_single(WindowManager)
 	on error err
-		-- Re-throw the error to ensure the test runner (make) catches it
 		error "A test failed: " & err
 	end try
 end runTests
@@ -125,9 +124,9 @@ on loadModuleForTest(moduleName, isMain)
 
 		set modulePathPOSIX to ""
 		if isMain is true then
-			set modulePathPOSIX to projectRoot & "/Sources/" & moduleName & ".applescript"
+			set modulePathPOSIX to projectRoot & "/build/" & moduleName & ".scpt"
 		else
-			set modulePathPOSIX to projectRoot & "/Sources/Modules/" & moduleName & ".applescript"
+			set modulePathPOSIX to projectRoot & "/build/Modules/" & moduleName & ".scpt"
 		end if
 
 		return load script file (modulePathPOSIX)
